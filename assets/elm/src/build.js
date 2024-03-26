@@ -1,22 +1,41 @@
-// const esbuild = require("esbuild");
-// import esbuild from "esbuild";
-//
 const esbuild = require("esbuild");
-// const ElmPlugin = require("esbuild-plugin-elm");
-// import ElmPlugin from "esbuild-plugin-elm";
 const ElmPlugin = require("esbuild-plugin-elm");
 
-esbuild
-  .build({
-    entryPoints: ["src/wordle.js"],
-    bundle: true,
-    outdir: "../js",
-    // watch: process.argv.includes("--watch"),
-    plugins: [
-      ElmPlugin({
-        debug: true,
-        clearOnWatch: true,
-      }),
-    ],
-  })
-  .catch((_e) => process.exit(1));
+const args = process.argv.slice(2);
+const watch = args.includes("--watch");
+const deploy = args.includes("--deploy");
+
+const baseOpts = {
+  entryPoints: ["src/wordle.js"],
+  bundle: true,
+  outdir: "../js",
+};
+
+if (watch) {
+  esbuild
+    .context({
+      ...baseOpts,
+      plugins: [
+        ElmPlugin({
+          debug: true,
+          clearOnWatch: true,
+        }),
+      ],
+    })
+    .then((ctx) => {
+      ctx.watch();
+    })
+    .catch((_e) => {
+      process.exit(1);
+    });
+} else if (deploy) {
+  esbuild.build({
+    ...baseOpts,
+    plugins: [ElmPlugin({ optimize: true })],
+  });
+} else {
+  esbuild.build({
+    ...baseOpts,
+    plugins: [ElmPlugin()],
+  });
+}

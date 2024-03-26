@@ -18,6 +18,7 @@ defmodule BaddlWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/new", PageController, :new
   end
 
   # Other scopes may use custom stacks.
