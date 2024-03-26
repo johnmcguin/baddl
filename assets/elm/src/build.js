@@ -31,6 +31,7 @@ if (watch) {
 } else if (deploy) {
   esbuild.build({
     ...baseOpts,
+    minify: true,
     plugins: [ElmPlugin({ optimize: true })],
   });
 } else {

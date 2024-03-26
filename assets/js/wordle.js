@@ -9650,9 +9650,5 @@
 
   // src/wordle.js
   var import_Main = __toESM(require_Main());
-  var $root = document.createElement("div");
-  document.body.appendChild($root);
-  import_Main.Elm.Main.init({
-    node: $root
-  });
+  window.ELM_APP = import_Main.Elm;
 })();
