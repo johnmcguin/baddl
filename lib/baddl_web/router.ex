@@ -1,4 +1,5 @@
 defmodule BaddlWeb.Router do
+  # alias BaddlWeb.WordleLive
   use BaddlWeb, :router
 
   pipeline :browser do
@@ -18,7 +19,8 @@ defmodule BaddlWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    get "/new", PageController, :new
+    # get "/new", PageController, :new
+    live "/new", WordleLive
   end
 
   # Other scopes may use custom stacks.
