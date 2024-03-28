@@ -1,5 +1,4 @@
 defmodule BaddlWeb.Router do
-  # alias BaddlWeb.WordleLive
   use BaddlWeb, :router
 
   pipeline :browser do
@@ -17,16 +16,8 @@ defmodule BaddlWeb.Router do
 
   scope "/", BaddlWeb do
     pipe_through :browser
-
-    get "/", PageController, :home
-    # get "/new", PageController, :new
-    live "/new", WordleLive
+    live "/", WordleLive
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", BaddlWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:baddl, :dev_routes) do
