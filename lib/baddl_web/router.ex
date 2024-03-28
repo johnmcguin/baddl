@@ -16,7 +16,8 @@ defmodule BaddlWeb.Router do
 
   scope "/", BaddlWeb do
     pipe_through :browser
-    live "/", WordleLive
+    get "/", PageController, :home
+    live "/game/:id", WordleLive
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
