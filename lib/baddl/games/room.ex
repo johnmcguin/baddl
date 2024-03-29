@@ -23,5 +23,22 @@ defmodule Baddl.Games.Room do
     |> change(%{short_token: unique_enough()})
   end
 
+  @doc false
+  def form_for_create(params) do
+    types = %{display_name: :string, num_players: :integer}
+
+    {%{}, types}
+    |> Ecto.Changeset.cast(params, Map.keys(types))
+    |> Ecto.Changeset.validate_required([:display_name, :num_players])
+    |> Ecto.Changeset.validate_number(:num_players, greater_than: 0, less_than: 6)
+  end
+
+  @doc false
+  def form_for_join(params) do
+    types = %{room_id: :string, display_name: :string}
+
+    {%{}, types}
+    |> Ecto.Changeset.cast(params, Map.keys(types))
+    |> Ecto.Changeset.validate_required([:room_id, :display_name])
   end
 end
