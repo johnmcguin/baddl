@@ -10,7 +10,9 @@
       Create a new Baddl
     </p>
 
-    <.input field={@create_form[:display_name]} type="text" label="Display Name" required />
+    <div class="mb-8">
+      <.input field={@create_form[:display_name]} type="text" label="Display Name" required />
+    </div>
 
     <:actions>
       <.button phx-disable-with="Creating game" class="w-full">Create</.button>
@@ -38,7 +40,12 @@
       Join an existing Baddl
     </p>
 
-    <.input field={@join_form[:display_name]} type="text" label="Display Name" required />
+    <div class="mb-8">
+      <.input field={@join_form[:display_name]} type="text" label="Display Name" required />
+    </div>
+    <div class="mb-8">
+      <.input field={@join_form[:room_id]} type="text" label="Room ID" required />
+    </div>
 
     <:actions>
       <.button phx-disable-with="Creating game" class="w-full">Join</.button>

@@ -25,13 +25,15 @@ defmodule BaddlWeb.HomeLive do
   end
 
   def handle_event("save", %{"create_game" => create_game_params}, socket) do
-    changeset = Room.changeset_for_create(create_game_params)
+    _changeset = Room.changeset_for_create(create_game_params)
+    # 1. create the Room
+    # 2. on success, navigate to the game, passing the player name
 
-    IO.puts("""
-    changeset is
-    #{inspect(changeset, pretty: true)}
-    """)
+    {:noreply, socket}
+  end
 
+  def handle_event("save", %{"join_game" => join_game_params}, socket) do
+    _changeset = Room.changeset_for_create(join_game_params)
     # 1. create the Room
     # 2. on success, navigate to the game, passing the player name
 
@@ -41,5 +43,16 @@ defmodule BaddlWeb.HomeLive do
   def handle_event("validate", %{"create_game" => create_game_params}, socket) do
     changeset = Room.changeset_for_create(create_game_params)
     {:noreply, assign_create_form(socket, Map.put(changeset, :action, :validate))}
+  end
+
+  def handle_event("validate", %{"join_game" => join_game_params}, socket) do
+    changeset = Room.changeset_for_join(join_game_params)
+
+    IO.puts("""
+    changeset is
+    #{inspect(changeset, pretty: true)}
+    """)
+
+    {:noreply, assign_join_form(socket, Map.put(changeset, :action, :validate))}
   end
 end

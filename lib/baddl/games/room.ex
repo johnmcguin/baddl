@@ -3,6 +3,7 @@ defmodule Baddl.Games.Room do
   import Ecto.Changeset
 
   @chars ~c"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  @short_token_len 8
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -14,7 +15,7 @@ defmodule Baddl.Games.Room do
   end
 
   def unique_enough() do
-    for _ <- 1..5, into: "", do: <<Enum.random(@chars)>>
+    for _ <- 1..@short_token_len, into: "", do: <<Enum.random(@chars)>>
   end
 
   @doc false
@@ -39,5 +40,6 @@ defmodule Baddl.Games.Room do
     {%{}, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
     |> Ecto.Changeset.validate_required([:room_id, :display_name])
+    |> Ecto.Changeset.validate_length(:room_id, is: @short_token_len)
   end
 end
