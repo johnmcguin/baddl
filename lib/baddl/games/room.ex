@@ -2,7 +2,7 @@ defmodule Baddl.Games.Room do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @chars "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  @chars ~c"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -14,7 +14,7 @@ defmodule Baddl.Games.Room do
   end
 
   def unique_enough() do
-    for _ <- 1..10, into: "", do: <<Enum.random(~c"#{@chars}")>>
+    for _ <- 1..10, into: "", do: <<Enum.random(@chars)>>
   end
 
   @doc false
