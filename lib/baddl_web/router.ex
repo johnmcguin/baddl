@@ -16,7 +16,8 @@ defmodule BaddlWeb.Router do
 
   scope "/", BaddlWeb do
     pipe_through :browser
-    get "/", PageController, :home
+    # get "/", PageController, :home
+    live "/", HomeLive
     live "/game/:id", WordleLive
   end
 
