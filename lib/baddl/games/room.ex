@@ -14,7 +14,7 @@ defmodule Baddl.Games.Room do
   end
 
   def unique_enough() do
-    for _ <- 1..10, into: "", do: <<Enum.random(@chars)>>
+    for _ <- 1..5, into: "", do: <<Enum.random(@chars)>>
   end
 
   @doc false
