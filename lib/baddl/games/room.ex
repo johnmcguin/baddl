@@ -18,9 +18,10 @@ defmodule Baddl.Games.Room do
   end
 
   @doc false
-  def create(room, attrs) do
-    room
-    |> cast(attrs, [:short_token])
-    |> validate_required([:short_token])
+  def create() do
+    %__MODULE__{}
+    |> change(%{short_token: unique_enough()})
+  end
+
   end
 end

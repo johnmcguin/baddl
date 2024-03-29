@@ -29,16 +29,12 @@ defmodule Baddl.Games do
 
   ## Examples
 
-      iex> create_room(%{field: value})
+      iex> create_room()
       {:ok, %Room{}}
 
-      iex> create_room(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
-  def create_room(attrs \\ %{}) do
-    %Room{}
-    |> Room.create(attrs)
+  def create_room() do
+    Room.create()
     |> Repo.insert()
   end
 
