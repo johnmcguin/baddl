@@ -1,6 +1,7 @@
 defmodule BaddlWeb.HomeLive do
   use BaddlWeb, :live_view
   alias Baddl.Games.Room
+  alias Baddl.Repo
 
   def mount(_params, _session, socket) do
     create_changeset = Room.changeset_for_create(%{})
@@ -25,11 +26,25 @@ defmodule BaddlWeb.HomeLive do
   end
 
   def handle_event("save", %{"create_game" => create_game_params}, socket) do
-    _changeset = Room.changeset_for_create(create_game_params)
-    # 1. create the Room
-    # 2. on success, navigate to the game, passing the player name
+    name = create_game_params["display_name"]
+    changeset = Room.changeset_for_create(%{display_name: name})
+    room = Room.create()
 
-    {:noreply, socket}
+    if changeset.valid? do
+      case Repo.insert(room) do
+        {:ok, %Room{} = struct} ->
+          # on success, navigate to the game liveview, passing the display_name to the 
+          # process to identify the current player
+          socket = assign(socket, display_name: name)
+
+          {:noreply, push_navigate(socket, to: "/game/#{struct.short_token}?name=#{name}")}
+
+        {:error, err_changeset} ->
+          {:noreply, assign_create_form(socket, err_changeset)}
+      end
+    else
+      {:noreply, assign_create_form(socket, changeset)}
+    end
   end
 
   def handle_event("save", %{"join_game" => join_game_params}, socket) do
