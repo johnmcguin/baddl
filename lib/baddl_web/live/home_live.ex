@@ -33,10 +33,6 @@ defmodule BaddlWeb.HomeLive do
     if changeset.valid? do
       case Repo.insert(room) do
         {:ok, %Room{} = struct} ->
-          # on success, navigate to the game liveview, passing the display_name to the 
-          # process to identify the current player
-          socket = assign(socket, display_name: name)
-
           {:noreply, push_navigate(socket, to: "/game/#{struct.short_token}?name=#{name}")}
 
         {:error, err_changeset} ->
@@ -49,8 +45,7 @@ defmodule BaddlWeb.HomeLive do
 
   def handle_event("save", %{"join_game" => join_game_params}, socket) do
     _changeset = Room.changeset_for_create(join_game_params)
-    # 1. create the Room
-    # 2. on success, navigate to the game, passing the player name
+    # 1. navigate to the game room by id, passing name as param
 
     {:noreply, socket}
   end
@@ -62,12 +57,6 @@ defmodule BaddlWeb.HomeLive do
 
   def handle_event("validate", %{"join_game" => join_game_params}, socket) do
     changeset = Room.changeset_for_join(join_game_params)
-
-    IO.puts("""
-    changeset is
-    #{inspect(changeset, pretty: true)}
-    """)
-
     {:noreply, assign_join_form(socket, Map.put(changeset, :action, :validate))}
   end
 end
