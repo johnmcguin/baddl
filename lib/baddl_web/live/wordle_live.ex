@@ -38,8 +38,8 @@ defmodule BaddlWeb.WordleLive do
   def handle_params(%{"name" => name, "id" => id}, _url, socket) do
     socket =
       socket
-      |> assign_current_player(name)
-      |> assign_game_id(id)
+      |> assign(name: name)
+      |> assign(room_id: id)
       |> assign(:msg, nil)
 
     {:noreply, socket}
@@ -61,13 +61,5 @@ defmodule BaddlWeb.WordleLive do
   # handles info broadcast from other LiveViews
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
     {:noreply, assign(socket, msg: "hello from #{payload.player}")}
-  end
-
-  def assign_current_player(socket, name) do
-    assign(socket, name: name)
-  end
-
-  def assign_game_id(socket, id) do
-    assign(socket, room_id: id)
   end
 end
