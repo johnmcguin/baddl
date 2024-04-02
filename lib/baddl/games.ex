@@ -25,6 +25,22 @@ defmodule Baddl.Games do
   def get_room!(id), do: Repo.get!(Room, id)
 
   @doc """
+  Gets a single room.
+
+  Raises `Ecto.NoResultsError` if the Room does not exist.
+
+  ## Examples
+
+      iex> get_room_by(short_token: "293jskdj")
+      %Room{}
+
+      iex> get_room_by(short_token: "invalid")
+      nil
+
+  """
+  def get_room_by(by_query), do: Repo.get_by(Room, by_query)
+
+  @doc """
   Creates a room.
 
   ## Examples

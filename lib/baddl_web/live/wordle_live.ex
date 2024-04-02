@@ -7,18 +7,16 @@ defmodule BaddlWeb.WordleLive do
   """
   use BaddlWeb, :live_view
   alias BaddlWeb.Endpoint
+  alias Baddl.Repo
+  alias Baddl.Games.Room
+  alias Baddl.Games
 
   def render(assigns) do
-    IO.puts("""
-    assigns is
-    #{inspect(assigns, pretty: true)}
-    """)
-
     # will likely need to loop over an array of n number 
     # game players. For each player that is not the current user,
     # show their status of guesses
     ~H"""
-    <div class="messages"><%= @display_name %></div>
+    <div class="messages"><%= @name %></div>
     <div id="wordle-game" phx-hook="Wordle" phx-update="ignore"></div>
     """
   end
@@ -26,11 +24,22 @@ defmodule BaddlWeb.WordleLive do
   # get the cookie from a plug and assign it to the session.
   # configure the cookie to be long lived. Use this as client 
   # id 
-  def mount(_params, session, socket) do
+  def mount(%{"id" => id}, session, socket) do
     # Subscribe to the game topic
     # e.g. Endpoint.subscribe("game:<game_id>")
     # assign any relevant info to the socket (may not be any right now)
-    {:ok, socket}
+    case Games.get_room_by(short_token: id) do
+      nil ->
+        socket =
+          socket
+          |> put_flash(:error, "Game room #{id} not found")
+          |> push_navigate(to: "/")
+
+        {:ok, socket}
+
+      %Room{} = room ->
+        {:ok, socket}
+    end
   end
 
   def handle_params(%{"name" => name, "id" => id}, _url, socket) do
@@ -53,6 +62,6 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def assign_current_player(socket, name) do
-    assign(socket, display_name: name)
+    assign(socket, name: name)
   end
 end
