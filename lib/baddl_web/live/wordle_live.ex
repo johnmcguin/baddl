@@ -17,6 +17,7 @@ defmodule BaddlWeb.WordleLive do
     # show their status of guesses
     ~H"""
     <div class="messages"><%= @name %></div>
+    <div :if={@msg}><%= @msg %></div>
     <div id="wordle-game" phx-hook="Wordle" phx-update="ignore"></div>
     """
   end
@@ -38,17 +39,37 @@ defmodule BaddlWeb.WordleLive do
         {:ok, socket}
 
       %Room{} = room ->
-        Endpoint.subscribe("game:#{room.id}")
+        Endpoint.subscribe("game:#{id}")
         {:ok, socket}
     end
   end
 
-  def handle_params(%{"name" => name, "id" => _id}, _url, socket) do
-    {:noreply, assign_current_player(socket, name)}
+  def handle_params(%{"name" => name, "id" => id}, _url, socket) do
+    socket =
+      socket
+      |> assign_current_player(name)
+      |> assign_game_id(id)
+      |> assign(:msg, nil)
+
+    {:noreply, socket}
   end
 
   def handle_params(%{"id" => id}, _url, socket) do
     {:noreply, push_patch(socket, to: "/game/#{id}?name=Guest")}
+  end
+
+  def handle_event("handle_guess", made_guess, socket) do
+    Endpoint.broadcast_from(self(), "game:#{socket.assigns.room_id}", "handle_player_guess", %{
+      player: socket.assigns.name,
+      guess: made_guess
+    })
+
+    {:noreply, socket}
+  end
+
+  # handles info broadcast from other LiveViews
+  def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
+    {:noreply, assign(socket, msg: "hello from another liveview")}
   end
 
   # handle_event receives events from the game client
@@ -70,5 +91,9 @@ defmodule BaddlWeb.WordleLive do
 
   def assign_current_player(socket, name) do
     assign(socket, name: name)
+  end
+
+  def assign_game_id(socket, id) do
+    assign(socket, room_id: id)
   end
 end
