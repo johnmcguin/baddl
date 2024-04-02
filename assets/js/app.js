@@ -31,6 +31,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
   hooks: {
     Wordle: {
       // possible lifecycle hooks
+      // consult: https://hexdocs.pm/phoenix_live_view/js-interop.html#client-hooks-via-phx-hook
       //
       // mounted
       // beforeUpdate
@@ -38,9 +39,13 @@ let liveSocket = new LiveSocket("/live", Socket, {
       // destroyed
       // disconnected
       // reconnected
+
       mounted() {
         if (typeof window !== undefined && window?.ELM_APP) {
-          window.ELM_APP.Main.init({ node: this.el });
+          const app = window.ELM_APP.Main.init({ node: this.el });
+          app.ports.submitGuess.subscribe((guess) => {
+            this.pushEvent("handle_guess", guess);
+          });
         }
       },
     },

@@ -10584,6 +10584,7 @@
           },
           $elm$core$Process$sleep(1800)
         );
+        var $author$project$Game$submitGuess = _Platform_outgoingPort("submitGuess", $elm$json$Json$Encode$string);
         var $author$project$Game$successMessage = function(solvedIn) {
           switch (solvedIn) {
             case 0:
@@ -11044,7 +11045,8 @@
                                   $author$project$Game$clearAnimation(
                                     isUnsupportedWord(guess) || !isSubmittable
                                   ),
-                                  $author$project$Game$clearAlert(message)
+                                  $author$project$Game$clearAlert(message),
+                                  $author$project$Game$submitGuess(guess)
                                 ]
                               )
                             )

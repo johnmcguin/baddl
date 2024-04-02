@@ -1,4 +1,4 @@
-module Game exposing (Model, Msg(..), getRandomWord, init, update, view)
+port module Game exposing (Model, Msg(..), getRandomWord, init, update, view)
 
 import Dict exposing (Dict)
 import Html exposing (Html, button, div, text)
@@ -9,6 +9,9 @@ import Process
 import Random
 import Task
 import Words exposing (getRandom, wordIsValid, wordLength)
+
+
+port submitGuess : String -> Cmd msg
 
 
 
@@ -275,7 +278,7 @@ update msg model =
                         , message = message
                         , keyboardDictionary = newDict shouldApplyGuess
                     }
-                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message ]
+                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess guess ]
                 )
 
         ( InProgress gameState, Delete ) ->

@@ -24,7 +24,7 @@ defmodule BaddlWeb.WordleLive do
   # get the cookie from a plug and assign it to the session.
   # configure the cookie to be long lived. Use this as client 
   # id 
-  def mount(%{"id" => id}, session, socket) do
+  def mount(%{"id" => id}, _session, socket) do
     # Subscribe to the game topic
     # e.g. Endpoint.subscribe("game:<game_id>")
     # assign any relevant info to the socket (may not be any right now)
@@ -38,11 +38,12 @@ defmodule BaddlWeb.WordleLive do
         {:ok, socket}
 
       %Room{} = room ->
+        Endpoint.subscribe("game:#{room.id}")
         {:ok, socket}
     end
   end
 
-  def handle_params(%{"name" => name, "id" => id}, _url, socket) do
+  def handle_params(%{"name" => name, "id" => _id}, _url, socket) do
     {:noreply, assign_current_player(socket, name)}
   end
 
@@ -51,15 +52,21 @@ defmodule BaddlWeb.WordleLive do
   end
 
   # handle_event receives events from the game client
-  def handle_event(step, _value, socket) do
+  def handle_event(event, value, socket) do
     # broadcast the event from pid's self so that the other liveviews
     # get notified
     # Endpoint.broadcast_from(self(), @topic, step, state)
     # may only need to broadcast since client who gave their update does not need to be updated (elm is showing them this state)
     # If needed, can send message to self()
     # send(self(), next_step)
+
     {:noreply, socket}
   end
+
+  # handle_info receives messages from other liveviews
+  # def handle_info(_msg, socket) do
+  #   {:noreply, socket}
+  # end
 
   def assign_current_player(socket, name) do
     assign(socket, name: name)
