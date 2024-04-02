@@ -44,10 +44,15 @@ defmodule BaddlWeb.HomeLive do
   end
 
   def handle_event("save", %{"join_game" => join_game_params}, socket) do
-    _changeset = Room.changeset_for_create(join_game_params)
-    # 1. navigate to the game room by id, passing name as param
+    name = join_game_params["display_name"]
+    room_id = join_game_params["room_id"]
+    changeset = Room.changeset_for_create(join_game_params)
 
-    {:noreply, socket}
+    if changeset.valid? do
+      {:noreply, push_navigate(socket, to: "/game/#{room_id}?name=#{name}")}
+    else
+      {:noreply, assign_join_form(socket, changeset)}
+    end
   end
 
   def handle_event("validate", %{"create_game" => create_game_params}, socket) do
