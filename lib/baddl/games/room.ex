@@ -21,7 +21,8 @@ defmodule Baddl.Games.Room do
   @doc false
   def create() do
     %__MODULE__{}
-    |> change(%{short_token: unique_enough()})
+    |> change()
+    |> put_change(:short_token, unique_enough())
   end
 
   @doc false
