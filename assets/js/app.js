@@ -39,10 +39,11 @@ let liveSocket = new LiveSocket("/live", Socket, {
            * */
           const appContainer = document.createElement("div");
           const { answer } = this.el.dataset;
+          const flags = answer ? { word: answer } : null;
           this.el.appendChild(appContainer);
           const app = window.ELM_APP.Main.init({
             node: appContainer,
-            flags: { word: answer },
+            flags,
           });
           app.ports.submitGuess.subscribe((guess) => {
             this.pushEventTo(this.el, "handle_guess", guess);

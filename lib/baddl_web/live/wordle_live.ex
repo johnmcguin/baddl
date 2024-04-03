@@ -40,7 +40,7 @@ defmodule BaddlWeb.WordleLive do
     |> assign(name: name)
     |> assign(room_id: id)
     |> assign(messages: nil)
-    |> assign(answer: "three")
+    |> assign(answer: "")
     |> then(fn socket -> {:noreply, socket} end)
   end
 
