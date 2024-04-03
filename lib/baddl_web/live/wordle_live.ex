@@ -18,30 +18,25 @@ defmodule BaddlWeb.WordleLive do
     """
   end
 
-  def mount(%{"id" => id}, _session, socket) do
+  def handle_params(%{"id" => id, "name" => name}, _url, socket) do
     case Games.get_room_by(short_token: id) do
       nil ->
-        socket =
-          socket
-          |> put_flash(:error, "Game room #{id} not found")
-          |> push_navigate(to: "/")
-
-        {:ok, socket}
+        socket
+        |> put_flash(:error, "Game room #{id} not found")
+        |> push_navigate(to: "/")
+        |> then(fn socket -> {:noreply, socket} end)
 
       %Room{} = _room ->
+        # maybe broadcast an event. All handlers check if exists?
         Endpoint.subscribe("game:#{id}")
 
-        {:ok, socket}
+        socket
+        |> assign(name: name)
+        |> assign(room_id: id)
+        |> assign(answer: "")
+        |> assign(messages: nil)
+        |> then(fn socket -> {:noreply, socket} end)
     end
-  end
-
-  def handle_params(%{"name" => name, "id" => id}, _url, socket) do
-    socket
-    |> assign(name: name)
-    |> assign(room_id: id)
-    |> assign(messages: nil)
-    |> assign(answer: "")
-    |> then(fn socket -> {:noreply, socket} end)
   end
 
   def handle_params(%{"id" => id}, _url, socket) do
@@ -60,6 +55,14 @@ defmodule BaddlWeb.WordleLive do
   # handles info broadcast from other LiveViews
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
     {:noreply, assign(socket, messages: "hello from #{payload.player}")}
+  end
+
+  def handle_info(%{topic: _topic, event: "handle_set_answer", payload: payload}, socket) do
+    if socket.assigns.answer do
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, answer: payload)}
+    end
   end
 
   def handle_info(_event, socket) do
