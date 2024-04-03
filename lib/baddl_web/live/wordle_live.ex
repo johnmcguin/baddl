@@ -36,14 +36,12 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_params(%{"name" => name, "id" => id}, _url, socket) do
-    socket =
-      socket
-      |> assign(name: name)
-      |> assign(room_id: id)
-      |> assign(messages: nil)
-      |> assign(answer: "three")
-
-    {:noreply, socket}
+    socket
+    |> assign(name: name)
+    |> assign(room_id: id)
+    |> assign(messages: nil)
+    |> assign(answer: "three")
+    |> then(fn socket -> {:noreply, socket} end)
   end
 
   def handle_params(%{"id" => id}, _url, socket) do
