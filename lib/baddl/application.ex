@@ -11,8 +11,7 @@ defmodule Baddl.Application do
       BaddlWeb.Telemetry,
       Baddl.Repo,
       {Ecto.Migrator,
-        repos: Application.fetch_env!(:baddl, :ecto_repos),
-        skip: skip_migrations?()},
+       repos: Application.fetch_env!(:baddl, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:baddl, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Baddl.PubSub},
       # Start the Finch HTTP client for sending emails
@@ -20,6 +19,7 @@ defmodule Baddl.Application do
       # Start a worker by calling: Baddl.Worker.start_link(arg)
       # {Baddl.Worker, arg},
       # Start to serve requests, typically the last entry
+      Baddl.GameRegistry,
       BaddlWeb.Endpoint
     ]
 
