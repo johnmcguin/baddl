@@ -7,7 +7,6 @@ defmodule BaddlWeb.WordleLive do
   """
   use BaddlWeb, :live_view
   alias BaddlWeb.Endpoint
-  alias Baddl.Repo
   alias Baddl.Games.Room
   alias Baddl.Games
 
@@ -15,7 +14,7 @@ defmodule BaddlWeb.WordleLive do
     ~H"""
     <div><%= @name %></div>
     <div><%= @messages %></div>
-    <div id="wordle-game" phx-hook="Wordle" phx-update="ignore"></div>
+    <div id="wordle-game" phx-hook="Wordle" phx-update="ignore" data-answer={@answer}></div>
     """
   end
 
@@ -42,6 +41,7 @@ defmodule BaddlWeb.WordleLive do
       |> assign(name: name)
       |> assign(room_id: id)
       |> assign(messages: nil)
+      |> assign(answer: "three")
 
     {:noreply, socket}
   end

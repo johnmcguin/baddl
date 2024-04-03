@@ -38,8 +38,12 @@ let liveSocket = new LiveSocket("/live", Socket, {
            * This prevents the app from being completely wiped out.
            * */
           const appContainer = document.createElement("div");
+          const { answer } = this.el.dataset;
           this.el.appendChild(appContainer);
-          const app = window.ELM_APP.Main.init({ node: appContainer });
+          const app = window.ELM_APP.Main.init({
+            node: appContainer,
+            flags: { word: answer },
+          });
           app.ports.submitGuess.subscribe((guess) => {
             this.pushEventTo(this.el, "handle_guess", guess);
           });
