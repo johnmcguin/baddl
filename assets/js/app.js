@@ -30,21 +30,18 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
   hooks: {
     Wordle: {
-      // possible lifecycle hooks
-      // consult: https://hexdocs.pm/phoenix_live_view/js-interop.html#client-hooks-via-phx-hook
-      //
-      // mounted
-      // beforeUpdate
-      // updated
-      // destroyed
-      // disconnected
-      // reconnected
-
       mounted() {
-        if (typeof window !== undefined && window?.ELM_APP) {
-          const app = window.ELM_APP.Main.init({ node: this.el });
+        if (window?.ELM_APP) {
+          /**
+           * Need to embed the app because when used in the LiveView,
+           * updates to the socket, will cause mounted to run again.
+           * This prevents the app from being completely wiped out.
+           * */
+          const appContainer = document.createElement("div");
+          this.el.appendChild(appContainer);
+          const app = window.ELM_APP.Main.init({ node: appContainer });
           app.ports.submitGuess.subscribe((guess) => {
-            this.pushEvent("handle_guess", guess);
+            this.pushEventTo(this.el, "handle_guess", guess);
           });
         }
       },
