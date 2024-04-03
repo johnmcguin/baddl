@@ -13,10 +13,8 @@ defmodule BaddlWeb.WordleLive do
 
   def render(assigns) do
     ~H"""
-    <div class="messages"><%= @name %></div>
-    <div>
-      <div :if={@msg}><%= @msg %></div>
-    </div>
+    <div><%= @name %></div>
+    <div><%= @messages %></div>
     <div id="wordle-game" phx-hook="Wordle" phx-update="ignore"></div>
     """
   end
@@ -31,8 +29,9 @@ defmodule BaddlWeb.WordleLive do
 
         {:ok, socket}
 
-      %Room{} = room ->
+      %Room{} = _room ->
         Endpoint.subscribe("game:#{id}")
+
         {:ok, socket}
     end
   end
@@ -42,7 +41,7 @@ defmodule BaddlWeb.WordleLive do
       socket
       |> assign(name: name)
       |> assign(room_id: id)
-      |> assign(:msg, nil)
+      |> assign(messages: nil)
 
     {:noreply, socket}
   end
@@ -62,6 +61,10 @@ defmodule BaddlWeb.WordleLive do
 
   # handles info broadcast from other LiveViews
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
-    {:noreply, assign(socket, msg: "hello from #{payload.player}")}
+    {:noreply, assign(socket, messages: "hello from #{payload.player}")}
+  end
+
+  def handle_info(_event, socket) do
+    {:noreply, socket}
   end
 end
