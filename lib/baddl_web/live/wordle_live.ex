@@ -14,7 +14,9 @@ defmodule BaddlWeb.WordleLive do
   def render(assigns) do
     ~H"""
     <div class="messages"><%= @name %></div>
-    <div :if={@msg}><%= @msg %></div>
+    <div>
+      <div :if={@msg}><%= @msg %></div>
+    </div>
     <div id="wordle-game" phx-hook="Wordle" phx-update="ignore"></div>
     """
   end
