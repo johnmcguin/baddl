@@ -9,12 +9,18 @@ defmodule BaddlWeb.WordleLive do
   alias BaddlWeb.Endpoint
   alias Baddl.Games.Room
   alias Baddl.Games
+  alias Baddl.GameRegistry
 
   def render(assigns) do
     ~H"""
     <div><%= @name %></div>
     <div><%= @messages %></div>
-    <div id="wordle-game" phx-hook="Wordle" phx-update="ignore" data-answer={@answer}></div>
+    <.async_result :let={answer} assign={@answer}>
+      <!-- todo: loader -->
+      <:loading>Loading game...</:loading>
+      <:failed :let={_failure}>there was an error creating the game</:failed>
+      <div id="wordle-game" phx-hook="Wordle" phx-update="ignore" data-answer={answer}></div>
+    </.async_result>
     """
   end
 
@@ -27,14 +33,13 @@ defmodule BaddlWeb.WordleLive do
         |> then(fn socket -> {:noreply, socket} end)
 
       %Room{} = _room ->
-        # maybe broadcast an event. All handlers check if exists?
         Endpoint.subscribe("game:#{id}")
 
         socket
         |> assign(name: name)
         |> assign(room_id: id)
-        |> assign(answer: "")
         |> assign(messages: nil)
+        |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
   end
@@ -67,5 +72,18 @@ defmodule BaddlWeb.WordleLive do
 
   def handle_info(_event, socket) do
     {:noreply, socket}
+  end
+
+  defp get_answer(room_id) do
+    case GameRegistry.get(room_id) do
+      nil ->
+        # replace with DB query
+        word = Enum.random(~w(place tests space))
+        GameRegistry.set(room_id, word)
+        get_answer(room_id)
+
+      answer ->
+        {:ok, %{answer: answer}}
+    end
   end
 end
