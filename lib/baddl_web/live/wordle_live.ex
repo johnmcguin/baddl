@@ -16,8 +16,6 @@ defmodule BaddlWeb.WordleLive do
     <div><%= @name %></div>
     <div><%= @messages %></div>
     <.async_result :let={answer} assign={@answer}>
-      <!-- todo: loader -->
-      <:loading>Loading game...</:loading>
       <:failed :let={_failure}>there was an error creating the game</:failed>
       <div id="wordle-game" phx-hook="Wordle" phx-update="ignore" data-answer={answer}></div>
     </.async_result>
@@ -32,7 +30,7 @@ defmodule BaddlWeb.WordleLive do
         |> push_navigate(to: "/")
         |> then(fn socket -> {:noreply, socket} end)
 
-      %Room{} = _room ->
+      %Room{} ->
         Endpoint.subscribe("game:#{id}")
 
         socket
