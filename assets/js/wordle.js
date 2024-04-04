@@ -10334,6 +10334,11 @@
         };
         var $author$project$Game$Lost = { $: "Lost" };
         var $author$project$Game$Pending = { $: "Pending" };
+        var $author$project$Game$SubmitGuessPortable = F3(
+          function(guess, guessState, lastGuess) {
+            return { guess, guessState, lastGuess };
+          }
+        );
         var $author$project$Game$WonIn = function(a) {
           return { $: "WonIn", a };
         };
@@ -10576,6 +10581,20 @@
             $elm$core$Set$toList($author$project$Words$words)
           );
         };
+        var $author$project$Game$letterStateAsString = function(letterState) {
+          switch (letterState.$) {
+            case "Blank":
+              return "Blank";
+            case "Pending":
+              return "Pending";
+            case "Incorrect":
+              return "Incorrect";
+            case "Correct":
+              return "Correct";
+            default:
+              return "Present";
+          }
+        };
         var $author$project$Game$ShowEndGameMessage = { $: "ShowEndGameMessage" };
         var $author$project$Game$showEndGameMessage = A2(
           $elm$core$Task$perform,
@@ -10584,7 +10603,30 @@
           },
           $elm$core$Process$sleep(1800)
         );
-        var $author$project$Game$submitGuess = _Platform_outgoingPort("submitGuess", $elm$json$Json$Encode$string);
+        var $elm$json$Json$Encode$int = _Json_wrap;
+        var $author$project$Game$submitGuess = _Platform_outgoingPort(
+          "submitGuess",
+          function($) {
+            return $elm$json$Json$Encode$object(
+              _List_fromArray(
+                [
+                  _Utils_Tuple2(
+                    "guess",
+                    $elm$json$Json$Encode$string($.guess)
+                  ),
+                  _Utils_Tuple2(
+                    "guessState",
+                    $elm$json$Json$Encode$list($elm$json$Json$Encode$string)($.guessState)
+                  ),
+                  _Utils_Tuple2(
+                    "lastGuess",
+                    $elm$json$Json$Encode$int($.lastGuess)
+                  )
+                ]
+              )
+            );
+          }
+        );
         var $author$project$Game$successMessage = function(solvedIn) {
           switch (solvedIn) {
             case 0:
@@ -10974,6 +11016,29 @@
                       var getMessage = function(isUnsupported) {
                         return isUnsupported ? $elm$core$Maybe$Just("Not in word list") : !isSubmittable ? $elm$core$Maybe$Just("Not enough letters") : $elm$core$Maybe$Nothing;
                       };
+                      var getCurrentGuessAsStateArray = F2(
+                        function(gameBoard, currentRow) {
+                          return A2(
+                            $elm$core$Maybe$withDefault,
+                            _List_fromArray(
+                              ["", "", "", "", ""]
+                            ),
+                            A2(
+                              $elm$core$Maybe$map,
+                              function(keyRow) {
+                                return A2(
+                                  $elm$core$List$map,
+                                  function(l) {
+                                    return $author$project$Game$letterStateAsString(l.b);
+                                  },
+                                  keyRow
+                                );
+                              },
+                              A2($elm_community$list_extra$List$Extra$getAt, currentRow, gameBoard)
+                            )
+                          );
+                        }
+                      );
                       var gameLost = function(solution) {
                         return isSubmittable && (!_Utils_eq(guess, solution) && (gameState.currentRow === 5 && $author$project$Words$wordIsValid(guess)));
                       };
@@ -11025,6 +11090,7 @@
                           var message = getMessage(
                             isUnsupportedWord(guess)
                           );
+                          var guessAsStateArray = A2(getCurrentGuessAsStateArray, board, gameState.currentRow);
                           return _Utils_Tuple2(
                             $author$project$Game$InProgress(
                               _Utils_update(
@@ -11046,7 +11112,9 @@
                                     isUnsupportedWord(guess) || !isSubmittable
                                   ),
                                   $author$project$Game$clearAlert(message),
-                                  $author$project$Game$submitGuess(guess)
+                                  $author$project$Game$submitGuess(
+                                    A3($author$project$Game$SubmitGuessPortable, guess, guessAsStateArray, gameState.currentRow + 1)
+                                  )
                                 ]
                               )
                             )
@@ -11412,20 +11480,6 @@
             );
           }
         );
-        var $author$project$Game$letterStateAsString = function(letterState) {
-          switch (letterState.$) {
-            case "Blank":
-              return "Blank";
-            case "Pending":
-              return "Pending";
-            case "Incorrect":
-              return "Incorrect";
-            case "Correct":
-              return "Correct";
-            default:
-              return "Present";
-          }
-        };
         var $elm$core$String$toLower = _String_toLower;
         var $author$project$Game$keyClass = F2(
           function(letter, maybeLetterState) {
