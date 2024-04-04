@@ -3,3 +3,34 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+
+:root {
+  --correct: #6aaa64;
+  --incorrect: #787c7e;
+  --present: #c9b458;
+  --lightgray: #d3d6da;
+}
+
+.game-meta {
+  .reveal {
+    animation: reveal 0.5s;
+    &.correct 
+      background-color: var(--correct);
+    }
+    &.incorrect {
+      background-color: var(--incorrect);
+    }
+    &.present {
+      background-color: var(--present);
+    }
+  }
+}
+
+@keyframes reveal {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
