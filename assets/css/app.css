@@ -14,7 +14,7 @@
 .game-meta {
   .reveal {
     animation: reveal 0.5s;
-    &.correct 
+    &.correct {
       background-color: var(--correct);
     }
     &.incorrect {
