@@ -11,7 +11,14 @@ import Task
 import Words exposing (getRandom, wordIsValid, wordLength)
 
 
-port submitGuess : String -> Cmd msg
+type alias SubmitGuessPortable =
+    { guess : String
+    , guessState : List String
+    , lastGuess : Int
+    }
+
+
+port submitGuess : SubmitGuessPortable -> Cmd msg
 
 
 
@@ -223,6 +230,13 @@ update msg model =
 
                     else
                         gameState.keyboardDictionary
+
+                getCurrentGuessAsStateArray : List KeyboardRow -> Int -> List String
+                getCurrentGuessAsStateArray gameBoard currentRow =
+                    gameBoard
+                        |> LE.getAt currentRow
+                        |> Maybe.map (\keyRow -> List.map (\l -> letterStateAsString <| Tuple.second l) keyRow)
+                        |> Maybe.withDefault [ "", "", "", "", "" ]
             in
             if gameWon then
                 ( GameEnd
@@ -253,6 +267,10 @@ update msg model =
                     message : Maybe String
                     message =
                         getMessage (isUnsupportedWord guess)
+
+                    guessAsStateArray : List String
+                    guessAsStateArray =
+                        getCurrentGuessAsStateArray board gameState.currentRow
                 in
                 ( InProgress
                     { gameState
@@ -278,7 +296,7 @@ update msg model =
                         , message = message
                         , keyboardDictionary = newDict shouldApplyGuess
                     }
-                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess guess ]
+                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess (SubmitGuessPortable guess guessAsStateArray (gameState.currentRow + 1)) ]
                 )
 
         ( InProgress gameState, Delete ) ->
