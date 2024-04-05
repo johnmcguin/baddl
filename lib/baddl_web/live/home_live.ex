@@ -27,8 +27,9 @@ defmodule BaddlWeb.HomeLive do
 
   def handle_event("save", %{"create_game" => create_game_params}, socket) do
     name = create_game_params["display_name"]
-    changeset = Room.changeset_for_create(%{display_name: name})
-    room = Room.create()
+    num_players = create_game_params["num_players"]
+    changeset = Room.changeset_for_create(%{display_name: name, num_players: num_players})
+    room = Room.create(%{num_players: num_players})
 
     if changeset.valid? do
       case Repo.insert(room) do

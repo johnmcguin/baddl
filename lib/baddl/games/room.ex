@@ -9,6 +9,7 @@ defmodule Baddl.Games.Room do
   @foreign_key_type :binary_id
   schema "rooms" do
     field :short_token, :string
+    field :num_players, :integer
     field :ended_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
@@ -19,15 +20,17 @@ defmodule Baddl.Games.Room do
   end
 
   @doc false
-  def create() do
+  def create(params) do
     %__MODULE__{}
-    |> change()
+    |> Ecto.Changeset.cast(params, [:num_players])
+    |> Ecto.Changeset.validate_required([:num_players])
+    |> Ecto.Changeset.validate_number(:num_players, greater_than: 0)
     |> put_change(:short_token, unique_enough())
   end
 
   @doc false
   def changeset_for_create(params) do
-    types = %{display_name: :string}
+    types = %{display_name: :string, num_players: :integer}
 
     {%{}, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
