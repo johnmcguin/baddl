@@ -20,6 +20,7 @@ defmodule Baddl.Application do
       # {Baddl.Worker, arg},
       # Start to serve requests, typically the last entry
       Baddl.GameRegistry,
+      BaddlWeb.Presence,
       BaddlWeb.Endpoint
     ]
 
