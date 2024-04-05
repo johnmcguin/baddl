@@ -92,11 +92,11 @@ defmodule BaddlWeb.WordleLive do
   end
 
   defp get_answer(room_id) do
-    case GameRegistry.get(room_id) do
+    case GameRegistry.get_answer(room_id) do
       nil ->
         # replace with DB query
         word = Enum.random(~w(place tests space demos there three slate pacer))
-        GameRegistry.set(room_id, word)
+        GameRegistry.set_answer(room_id, word)
         get_answer(room_id)
 
       answer ->
