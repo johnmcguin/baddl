@@ -7,13 +7,17 @@ defmodule BaddlWeb.WordleLive do
   """
   use BaddlWeb, :live_view
   alias BaddlWeb.Endpoint
+  alias BaddlWeb.Presence
   alias Baddl.Games.Room
   alias Baddl.Games
   alias Baddl.GameRegistry
 
   def render(assigns) do
     ~H"""
-    <.async_result :let={answer} assign={@answer}>
+    <div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
+      waiting for all players to join...
+    </div>
+    <.async_result :let={answer} :if={@game_ready} assign={@answer}>
       <:failed :let={_failure}>there was an error creating the game</:failed>
       <div :if={@messages} class="game-meta grid gap-4 grid-cols-2">
         <div :for={{player, summary} <- @messages} class="flex flex-row justify-center mb-4">
@@ -45,13 +49,15 @@ defmodule BaddlWeb.WordleLive do
         |> push_navigate(to: "/")
         |> then(fn socket -> {:noreply, socket} end)
 
-      %Room{} ->
+      %Room{} = room ->
         Endpoint.subscribe("game:#{id}")
+        Presence.track(self(), "game:#{id}", name, %{name: name})
 
         socket
         |> assign(name: name)
         |> assign(room_id: id)
         |> assign(messages: %{})
+        |> assign(game_ready: game_ready?(id, room.num_players))
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
@@ -102,6 +108,13 @@ defmodule BaddlWeb.WordleLive do
       results ->
         {:ok, %{answer: results.answer}}
     end
+  end
+
+  defp game_ready?(game_token, expected_players) do
+    Presence.list("game:#{game_token}")
+    |> Map.keys()
+    |> Kernel.length()
+    |> Kernel.==(expected_players)
   end
 
   defp update_player_state(socket, %{
