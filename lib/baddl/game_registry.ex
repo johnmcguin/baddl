@@ -33,11 +33,11 @@ defmodule Baddl.GameRegistry do
 
   ## Examples
 
-      iex> set("tks2QdHA", %{answer: "there"})
+      iex> merge("tks2QdHA", %{answer: "there"})
       :ok
 
   """
-  def set(key, updates), do: Agent.update(__MODULE__, &merge_updates(&1, key, updates))
+  def merge(key, updates), do: Agent.update(__MODULE__, &merge_updates(&1, key, updates))
 
   @doc false
   defp merge_updates(agent_state, key, updates) do
