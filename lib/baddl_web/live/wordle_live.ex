@@ -15,8 +15,8 @@ defmodule BaddlWeb.WordleLive do
     ~H"""
     <.async_result :let={answer} assign={@answer}>
       <:failed :let={_failure}>there was an error creating the game</:failed>
-      <div :if={@messages} class="game-meta">
-        <div :for={{player, summary} <- @messages} class="flex flex-row mb-4">
+      <div :if={@messages} class="game-meta grid gap-4 grid-cols-2">
+        <div :for={{player, summary} <- @messages} class="flex flex-row justify-center mb-4">
           <span class="mr-4"><%= player %>:</span>
           <div>
             <%= Enum.with_index(summary.latest_guess, fn guess, idx -> %>
