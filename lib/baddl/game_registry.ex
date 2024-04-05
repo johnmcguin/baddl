@@ -9,37 +9,44 @@ defmodule Baddl.GameRegistry do
   end
 
   @doc """
-  Gets the answer for a game.
+  Gets the game state.
 
-  Returns nil if no answer is found.
+  Returns nil if no game state is found.
 
   ## Examples
 
-      iex> get_answer("tks2QdHA")
-      "there"
+      iex> get("tks2QdHA")
+      %{answer: "there"}
 
-      iex> get_answer("no_game")
+      iex> get("no_game")
       nil
 
   """
-  def get_answer(key) do
-    Agent.get(__MODULE__, fn state -> Map.get(state, key) end)
-  end
+  def get(key), do: Agent.get(__MODULE__, fn state -> Map.get(state, key) end)
 
   @doc """
-  Sets the answer for a game.
+  Sets/updates the game state.
 
   Returns :ok atom
 
-  Get the answer with get_answer/1 after set_answer/2
+  Get the game state with get/1 after set/2
 
   ## Examples
 
-      iex> set_answer("tks2QdHA", "there")
+      iex> set("tks2QdHA", %{answer: "there"})
       :ok
 
   """
-  def set_answer(key, value) do
-    Agent.update(__MODULE__, fn state -> Map.put(state, key, value) end)
+  def set(key, updates), do: Agent.update(__MODULE__, &merge_updates(&1, key, updates))
+
+  @doc false
+  defp merge_updates(agent_state, key, updates) do
+    {_old, new} =
+      Map.get_and_update(agent_state, key, fn current_state ->
+        current_value = if is_nil(current_state), do: %{}, else: current_state
+        {current_value, Map.merge(current_value, updates)}
+      end)
+
+    new
   end
 end
