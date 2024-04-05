@@ -38,7 +38,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_params(%{"id" => id, "name" => name}, _url, socket) do
-    case Games.get_room_by(short_token: id) do
+    case Games.get_active_room(id) do
       nil ->
         socket
         |> put_flash(:error, "Game room #{id} not found")
