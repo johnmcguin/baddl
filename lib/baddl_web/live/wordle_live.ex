@@ -52,12 +52,14 @@ defmodule BaddlWeb.WordleLive do
       %Room{} = room ->
         Endpoint.subscribe("game:#{id}")
         Presence.track(self(), "game:#{id}", name, %{name: name})
+        broadcast_readiness("game:#{id}", game_ready?(id, room.num_players))
+        GameRegistry.merge(id, %{expected_players: room.num_players})
 
         socket
         |> assign(name: name)
         |> assign(room_id: id)
         |> assign(messages: %{})
-        |> assign(game_ready: game_ready?(id, room.num_players))
+        |> assign(game_ready: false)
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
@@ -93,21 +95,38 @@ defmodule BaddlWeb.WordleLive do
     end
   end
 
+  def handle_info(%{topic: _topic, event: "handle_readiness", payload: payload}, socket) do
+    {:noreply, assign(socket, game_ready: payload.ready)}
+  end
+
+  def handle_info(
+        %{topic: "game:" <> game_token, event: "check_readiness", payload: _payload},
+        socket
+      ) do
+    game_state = GameRegistry.get(game_token)
+
+    {:noreply, assign(socket, game_ready: game_ready?(game_token, game_state.expected_players))}
+  end
+
   def handle_info(_event, socket) do
     {:noreply, socket}
   end
 
   defp get_answer(room_id) do
-    case GameRegistry.get(room_id) do
+    case GameRegistry.get_path(room_id, [:answer]) do
       nil ->
         # replace with DB query
         word = Enum.random(~w(place tests space demos there three slate pacer))
-        GameRegistry.set(room_id, %{answer: word})
+        GameRegistry.merge(room_id, %{answer: word})
         get_answer(room_id)
 
-      results ->
-        {:ok, %{answer: results.answer}}
+      _ ->
+        {:ok, %{answer: ""}}
     end
+  end
+
+  defp broadcast_readiness(topic, ready_state) do
+    Endpoint.broadcast(topic, "handle_readiness", %{ready: ready_state})
   end
 
   defp game_ready?(game_token, expected_players) do

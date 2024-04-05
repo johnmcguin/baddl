@@ -24,6 +24,12 @@ defmodule Baddl.GameRegistry do
   """
   def get(key), do: Agent.get(__MODULE__, fn state -> Map.get(state, key) end)
 
+  def get_path(key, path) do
+    Agent.get(__MODULE__, fn state ->
+      get_in(state, [key] ++ path)
+    end)
+  end
+
   @doc """
   Sets/updates the game state.
 
