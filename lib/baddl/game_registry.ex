@@ -19,7 +19,7 @@ defmodule Baddl.GameRegistry do
       "there"
 
       iex> get_answer("no_game")
-      nilget_answer("no_game")
+      nil
 
   """
   def get_answer(key) do
