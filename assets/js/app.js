@@ -29,6 +29,27 @@ let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
   hooks: {
+    AnimatePlayer: {
+      mounted() {
+        this.handleEvent("animate-player", function ({ player }) {
+          const playerGuesses = document.querySelectorAll(
+            `[id^=${player}-guess]`,
+          );
+
+          if (playerGuesses?.length) {
+            for (let guess of playerGuesses) {
+              guess.classList.add("reveal");
+            }
+
+            setTimeout(() => {
+              for (let guess of playerGuesses) {
+                guess.classList.remove("reveal");
+              }
+            }, 500);
+          }
+        });
+      },
+    },
     Wordle: {
       mounted() {
         if (window?.ELM_APP) {

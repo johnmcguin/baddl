@@ -21,7 +21,9 @@ defmodule BaddlWeb.WordleLive do
           <div>
             <%= Enum.with_index(summary.latest_guess, fn guess, idx -> %>
               <span
-                class={"reveal #{String.downcase(guess)} w-3 h-3 inline-block"}
+                phx-hook="AnimatePlayer"
+                id={"#{player}-guess-#{idx}"}
+                class={"show #{String.downcase(guess)} w-3 h-3 inline-block"}
                 style={"animation-delay: #{idx * 0.1}s"}
               >
               </span>
@@ -73,6 +75,7 @@ defmodule BaddlWeb.WordleLive do
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
     socket
     |> update_player_state(payload)
+    |> push_event("animate-player", %{player: payload.player})
     |> then(fn socket -> {:noreply, socket} end)
   end
 
