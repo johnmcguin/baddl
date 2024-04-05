@@ -79,7 +79,6 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
-  # handles info broadcast from other LiveViews
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
     socket
     |> update_player_state(payload)
