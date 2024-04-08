@@ -6,6 +6,9 @@ defmodule BaddlWeb.WordleLive do
   Shows the current game status realtime (reporting on each player status)
   """
   use BaddlWeb, :live_view
+
+  require Logger
+
   alias BaddlWeb.Endpoint
   alias BaddlWeb.Presence
   alias Baddl.Games.Room
@@ -16,10 +19,13 @@ defmodule BaddlWeb.WordleLive do
 
   def render(assigns) do
     ~H"""
+    <div :if={String.length(@winner) > 0}>
+      <%= @winner %>
+    </div>
     <div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
       waiting for all players to join...
     </div>
-    <.async_result :let={answer} :if={@game_ready} assign={@answer}>
+    <.async_result :let={answer} :if={@game_ready && String.length(@winner) == 0} assign={@answer}>
       <:failed :let={_failure}>there was an error creating the game</:failed>
       <div :if={@messages} class="game-meta grid gap-4 grid-cols-2">
         <div :for={{player, summary} <- @messages} class="flex flex-row justify-center mb-4">
@@ -62,6 +68,7 @@ defmodule BaddlWeb.WordleLive do
         |> assign(room_id: id)
         |> assign(messages: %{})
         |> assign(game_ready: false)
+        |> assign(winner: "")
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
@@ -81,11 +88,24 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
-  def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
-    socket
-    |> update_player_state(payload)
-    |> push_event("animate-player", %{player: payload.player})
-    |> then(fn socket -> {:noreply, socket} end)
+  def handle_event("handle_win", _payload, socket) do
+    Endpoint.broadcast(@topic <> socket.assigns.room_id, "handle_game_won", %{
+      player: socket.assigns.name,
+    })
+    {:noreply, socket}
+  end
+
+  def handle_info(
+        %{topic: @topic <> game_token, event: "check_readiness", payload: _payload},
+        socket
+      ) do
+    game_state = GameRegistry.get(game_token)
+
+    {:noreply, assign(socket, game_ready: game_ready?(game_token, game_state.expected_players))}
+  end
+
+  def handle_info(%{topic: _topic, event: "handle_readiness", payload: payload}, socket) do
+    {:noreply, assign(socket, game_ready: payload.ready)}
   end
 
   def handle_info(%{topic: _topic, event: "handle_set_answer", payload: payload}, socket) do
@@ -96,17 +116,17 @@ defmodule BaddlWeb.WordleLive do
     end
   end
 
-  def handle_info(%{topic: _topic, event: "handle_readiness", payload: payload}, socket) do
-    {:noreply, assign(socket, game_ready: payload.ready)}
+  def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
+    socket
+    |> update_player_state(payload)
+    |> push_event("animate-player", %{player: payload.player})
+    |> then(fn socket -> {:noreply, socket} end)
   end
 
-  def handle_info(
-        %{topic: @topic <> game_token, event: "check_readiness", payload: _payload},
-        socket
-      ) do
-    game_state = GameRegistry.get(game_token)
-
-    {:noreply, assign(socket, game_ready: game_ready?(game_token, game_state.expected_players))}
+  def handle_info(%{topic: _topic, event: "handle_game_won", payload: payload}, socket) do
+    socket
+    |> assign(winner: payload.player) 
+    |> then(fn socket -> {:noreply, socket} end)
   end
 
   def handle_info(_event, socket) do

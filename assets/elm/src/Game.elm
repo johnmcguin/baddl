@@ -21,6 +21,9 @@ type alias SubmitGuessPortable =
 port submitGuess : SubmitGuessPortable -> Cmd msg
 
 
+port submitWin : () -> Cmd msg
+
+
 
 -- Model
 
@@ -247,7 +250,7 @@ update msg model =
                     , keyboardLetters = gameState.keyboardLetters
                     , keyboardDictionary = newDict shouldApplyGuess
                     }
-                , showEndGameMessage
+                , Cmd.batch [ showEndGameMessage, submitWin () ]
                 )
 
             else if gameLost gameState.solution then

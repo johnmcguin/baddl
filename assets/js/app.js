@@ -62,12 +62,23 @@ let liveSocket = new LiveSocket("/live", Socket, {
           const { answer } = this.el.dataset;
           const flags = answer ? { word: answer } : null;
           this.el.appendChild(appContainer);
+
           const app = window.ELM_APP.Main.init({
             node: appContainer,
             flags,
           });
+
           app.ports.submitGuess.subscribe((guess) => {
             this.pushEventTo(this.el, "handle_guess", guess);
+          });
+
+          app.ports.submitWin.subscribe(() => {
+            // hacky, but accomodates elm transition before sending
+            setTimeout(() => {
+              this.pushEventTo(this.el, "handle_win", {
+                completedAt: Date.now(),
+              });
+            }, 1500);
           });
         }
       },

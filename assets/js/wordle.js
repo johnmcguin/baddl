@@ -10627,6 +10627,13 @@
             );
           }
         );
+        var $elm$json$Json$Encode$null = _Json_encodeNull;
+        var $author$project$Game$submitWin = _Platform_outgoingPort(
+          "submitWin",
+          function($) {
+            return $elm$json$Json$Encode$null;
+          }
+        );
         var $author$project$Game$successMessage = function(solvedIn) {
           switch (solvedIn) {
             case 0:
@@ -11069,7 +11076,14 @@
                               solution: gameState.solution
                             }
                           ),
-                          $author$project$Game$showEndGameMessage
+                          $elm$core$Platform$Cmd$batch(
+                            _List_fromArray(
+                              [
+                                $author$project$Game$showEndGameMessage,
+                                $author$project$Game$submitWin(_Utils_Tuple0)
+                              ]
+                            )
+                          )
                         );
                       } else {
                         if (gameLost(gameState.solution)) {
