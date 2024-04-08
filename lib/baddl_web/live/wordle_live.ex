@@ -12,6 +12,8 @@ defmodule BaddlWeb.WordleLive do
   alias Baddl.Games
   alias Baddl.GameRegistry
 
+  @topic "game:"
+
   def render(assigns) do
     ~H"""
     <div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
@@ -50,9 +52,9 @@ defmodule BaddlWeb.WordleLive do
         |> then(fn socket -> {:noreply, socket} end)
 
       %Room{} = room ->
-        Endpoint.subscribe("game:#{id}")
-        Presence.track(self(), "game:#{id}", name, %{name: name})
-        broadcast_readiness("game:#{id}", game_ready?(id, room.num_players))
+        Endpoint.subscribe(@topic <> id)
+        Presence.track(self(), @topic <> id, name, %{name: name})
+        broadcast_readiness(@topic <> id, game_ready?(id, room.num_players))
         GameRegistry.merge(id, %{expected_players: room.num_players})
 
         socket
@@ -70,7 +72,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_event("handle_guess", payload, socket) do
-    Endpoint.broadcast_from(self(), "game:#{socket.assigns.room_id}", "handle_player_guess", %{
+    Endpoint.broadcast_from(self(), @topic <> socket.assigns.room_id, "handle_player_guess", %{
       player: socket.assigns.name,
       latest_guess: payload["guessState"],
       latest_guess_num: payload["lastGuess"]
@@ -99,7 +101,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_info(
-        %{topic: "game:" <> game_token, event: "check_readiness", payload: _payload},
+        %{topic: @topic <> game_token, event: "check_readiness", payload: _payload},
         socket
       ) do
     game_state = GameRegistry.get(game_token)
@@ -129,7 +131,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   defp game_ready?(game_token, expected_players) do
-    Presence.list("game:#{game_token}")
+    Presence.list(@topic <> game_token)
     |> Map.keys()
     |> Kernel.length()
     |> Kernel.==(expected_players)
