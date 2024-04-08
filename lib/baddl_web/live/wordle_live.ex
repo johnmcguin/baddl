@@ -119,8 +119,8 @@ defmodule BaddlWeb.WordleLive do
         GameRegistry.merge(room_id, %{answer: word})
         get_answer(room_id)
 
-      _ ->
-        {:ok, %{answer: ""}}
+      answer ->
+        {:ok, %{answer: answer}}
     end
   end
 
