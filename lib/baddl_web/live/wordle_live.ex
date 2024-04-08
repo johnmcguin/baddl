@@ -19,8 +19,9 @@ defmodule BaddlWeb.WordleLive do
 
   def render(assigns) do
     ~H"""
-    <div :if={String.length(@winner) > 0}>
+    <div :if={String.length(@winner) > 0} class={if String.length(@winner) > 0 do "reveal" else "" end}>
       <%= @winner %>
+      <.button phx-click="new_game">New Game</.button> 
     </div>
     <div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
       waiting for all players to join...
@@ -93,6 +94,27 @@ defmodule BaddlWeb.WordleLive do
       player: socket.assigns.name,
     })
     {:noreply, socket}
+  end
+
+  def handle_event("new_game", _payload, socket) do
+    room_id = socket.assigns.room_id
+    GameRegistry.merge(room_id, %{answer: nil})
+    Endpoint.broadcast(@topic <> socket.assigns.room_id, "handle_new_game", %{})
+
+    {:noreply, socket}
+  end
+
+
+  def handle_info(
+        %{topic: @topic <> game_token, event: "handle_new_game", payload: _payload},
+        socket
+      ) do
+
+    socket
+    |> assign(winner: "") 
+    |> assign_async(:answer, fn -> get_answer(game_token) end)
+    |> assign(messages: %{}) 
+    |> then(fn socket -> {:noreply, socket} end)
   end
 
   def handle_info(
