@@ -29,7 +29,10 @@ defmodule BaddlWeb.HomeLive do
     name = create_game_params["display_name"]
     num_players = create_game_params["num_players"]
     changeset = Room.changeset_for_create(%{display_name: name, num_players: num_players})
-    room = Room.create(%{num_players: num_players})
+
+    # replace with db
+    answer = Enum.random(~w(place tests space demos there three slate pacer))
+    room = Room.create_with_answer(%{num_players: num_players, games: [%{answer: answer}]})
 
     if changeset.valid? do
       case Repo.insert(room) do
