@@ -8,7 +8,6 @@ defmodule Baddl.Games.Game do
   schema "games" do
     field :answer, :string
     belongs_to :room, Room
-    field :ended_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -18,5 +17,11 @@ defmodule Baddl.Games.Game do
     game
     |> cast(attrs, [:answer])
     |> validate_required([:answer])
+  end
+
+  def new_game(game, attrs) do
+    game
+    |> cast(attrs, [:answer, :room_id])
+    |> validate_required([:answer, :room_id])
   end
 end

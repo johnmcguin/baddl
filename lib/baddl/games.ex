@@ -60,7 +60,9 @@ defmodule Baddl.Games do
     query_active_room(short_token)
     |> join(:inner, [r], g in assoc(r, :games))
     |> where([r, g], is_nil(g.ended_at))
+    |> order_by([r, g], desc: g.inserted_at)
     |> select([r, g], g.answer)
+    |> first()
     |> Repo.one()
   end
 
