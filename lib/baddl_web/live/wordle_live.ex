@@ -122,8 +122,7 @@ defmodule BaddlWeb.WordleLive do
         |> assign(room_id: id)
         |> assign(messages: %{})
         |> assign(game_ready: false)
-        # |> assign(winner: "")
-        |> assign(winner: "John")
+        |> assign(winner: "")
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
