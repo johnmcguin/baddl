@@ -1,6 +1,7 @@
 defmodule Baddl.Games.Room do
   use Ecto.Schema
   import Ecto.Changeset
+  alias Baddl.Games.Game
 
   @chars ~c"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   @short_token_len 8
@@ -11,6 +12,8 @@ defmodule Baddl.Games.Room do
     field :short_token, :string
     field :num_players, :integer
     field :ended_at, :utc_datetime
+
+    has_many :games, Game
 
     timestamps(type: :utc_datetime)
   end
