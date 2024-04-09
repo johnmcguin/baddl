@@ -7,7 +7,7 @@ defmodule Baddl.Games do
   alias Ecto.Multi
 
   alias Baddl.Repo
-  alias Baddl.Games.Room
+  alias Baddl.Games.{Room, Game}
 
   @doc """
   Gets a single room.
@@ -41,6 +41,26 @@ defmodule Baddl.Games do
   """
   def get_active_room(short_token) do
     query_active_room(short_token)
+    |> Repo.one()
+  end
+
+  @doc """
+  Returns the answer for the active game
+
+
+  ## Examples
+
+      iex> get_answer_for_current_game("293jskdj")
+      "answer"
+
+      iex> get_answer_for_current_game("invalid")
+      nil
+  """
+  def get_answer_for_current_game(short_token) do
+    query_active_room(short_token)
+    |> join(:inner, [r], g in assoc(r, :games))
+    |> where([r, g], is_nil(g.ended_at))
+    |> select([r, g], g.answer)
     |> Repo.one()
   end
 
