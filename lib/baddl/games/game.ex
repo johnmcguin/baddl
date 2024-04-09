@@ -8,6 +8,7 @@ defmodule Baddl.Games.Game do
   schema "games" do
     field :answer, :string
     belongs_to :room, Room
+    field :ended_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end

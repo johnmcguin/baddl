@@ -4,8 +4,9 @@ defmodule Baddl.Repo.Migrations.CreateGames do
   def change do
     create table(:games, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :answer, :string
+      add :answer, :string, null: false
       add :room_id, references(:rooms, on_delete: :delete_all, type: :binary_id)
+      add :ended_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
     end
