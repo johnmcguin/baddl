@@ -2,6 +2,7 @@ defmodule Baddl.Games.Room do
   use Ecto.Schema
   import Ecto.Changeset
   alias Baddl.Games.Game
+  alias Baddl.Repo
 
   @chars ~c"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   @short_token_len 8
@@ -26,6 +27,16 @@ defmodule Baddl.Games.Room do
   def create(params) do
     %__MODULE__{}
     |> cast(params, [:num_players])
+    |> validate_required([:num_players])
+    |> validate_number(:num_players, greater_than: 0)
+    |> put_change(:short_token, unique_enough())
+  end
+
+  @doc false
+  def create_with_answer(params) do
+    %__MODULE__{}
+    |> cast(params, [:num_players])
+    |> cast_assoc(:games)
     |> validate_required([:num_players])
     |> validate_number(:num_players, greater_than: 0)
     |> put_change(:short_token, unique_enough())
