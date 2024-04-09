@@ -50,7 +50,15 @@ defmodule Baddl.Games do
   end
 
   @doc """
-  Closes a room.
+  Closes the active room by short_token identifier
+
+  ## Examples
+
+      iex> close_room("293jskdj")
+      {:ok, %{room: room, close_room: close_room}}
+
+      iex> close_room("sadpath")
+      {:error, errors}
   """
   def close_room(short_token) do
     Multi.new()
