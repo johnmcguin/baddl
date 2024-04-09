@@ -22,10 +22,15 @@ defmodule Baddl.Games.Room do
   @doc false
   def create(params) do
     %__MODULE__{}
-    |> Ecto.Changeset.cast(params, [:num_players])
-    |> Ecto.Changeset.validate_required([:num_players])
-    |> Ecto.Changeset.validate_number(:num_players, greater_than: 0)
+    |> cast(params, [:num_players])
+    |> validate_required([:num_players])
+    |> validate_number(:num_players, greater_than: 0)
     |> put_change(:short_token, unique_enough())
+  end
+
+  def close_room(room) do
+    room
+    |> change(%{ended_at: DateTime.truncate(DateTime.utc_now(), :second)})
   end
 
   @doc false

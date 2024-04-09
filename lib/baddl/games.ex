@@ -4,8 +4,9 @@ defmodule Baddl.Games do
   """
 
   import Ecto.Query, warn: false
-  alias Baddl.Repo
+  alias Ecto.Multi
 
+  alias Baddl.Repo
   alias Baddl.Games.Room
 
   @doc """
@@ -39,24 +40,23 @@ defmodule Baddl.Games do
       nil
   """
   def get_active_room(short_token) do
-    Room
-    |> where([r], is_nil(r.ended_at))
-    |> where([r], r.short_token == ^short_token)
+    query_active_room(short_token)
     |> Repo.one()
   end
 
+  defp query_active_room(short_token) do
+    Room
+    |> where([r], is_nil(r.ended_at) and r.short_token == ^short_token)
+  end
+
   @doc """
-  Creates a room.
-
-  ## Examples
-
-      iex> create_room()
-      {:ok, %Room{}}
-
+  Closes a room.
   """
-  def create_room() do
-    Room.create()
-    |> Repo.insert()
+  def close_room(short_token) do
+    Multi.new()
+    |> Multi.one(:room, query_active_room(short_token))
+    |> Multi.update(:close_room, &Room.close_room(&1.room))
+    |> Repo.transaction()
   end
 
   @doc """

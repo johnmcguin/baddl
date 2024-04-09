@@ -9,12 +9,30 @@ defmodule BaddlWeb.Presence do
     otp_app: :baddl,
     pubsub_server: Baddl.PubSub
 
+  require Logger
   alias BaddlWeb.Endpoint
+  alias Baddl.Games
 
   def init(_opts), do: {:ok, %{}}
 
-  def handle_metas(topic, _diff, _presences, state) do
-    Endpoint.broadcast(topic, "check_readiness", %{})
+  @doc """
+  Handler for an empty game lobby. "Close" the game room by ending it.
+  """
+  def handle_metas("game:" <> game_token, _diff, presences, state) when presences == %{} do
+    case Games.close_room(game_token) do
+      {:ok, _updates} ->
+        Logger.info("#{__MODULE__} closed game room: #{game_token}")
+
+      {:error, reason} ->
+        Logger.error("#{__MODULE__} could not close game room: #{game_token}")
+        Logger.error(inspect(reason))
+    end
+
+    {:ok, state}
+  end
+
+  def handle_metas("game:" <> game_token, _diff, _presences, state) do
+    Endpoint.broadcast("game:" <> game_token, "check_readiness", %{})
     {:ok, state}
   end
 end
