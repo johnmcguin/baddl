@@ -44,6 +44,23 @@ defmodule Baddl.Games do
     |> Repo.one()
   end
 
+  def create_new_game(short_token) do
+    Multi.new()
+    |> Multi.one(:room, query_active_room(short_token))
+    |> Multi.run(:game, fn _repo, %{room: room} ->
+      case room do
+        nil ->
+          {:error, :not_found}
+
+        room ->
+          answer = Enum.random(~w(place tests space demos there three slate pacer))
+          cs = Game.new_game(%Game{}, %{answer: answer, room_id: room.id})
+          Repo.insert(cs)
+      end
+    end)
+    |> Repo.transaction()
+  end
+
   @doc """
   Returns the answer for the active game
 
@@ -59,7 +76,6 @@ defmodule Baddl.Games do
   def get_answer_for_current_game(short_token) do
     query_active_room(short_token)
     |> join(:inner, [r], g in assoc(r, :games))
-    |> where([r, g], is_nil(g.ended_at))
     |> order_by([r, g], desc: g.inserted_at)
     |> select([r, g], g.answer)
     |> first()

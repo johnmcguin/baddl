@@ -2,7 +2,6 @@ defmodule Baddl.Games.Room do
   use Ecto.Schema
   import Ecto.Changeset
   alias Baddl.Games.Game
-  alias Baddl.Repo
 
   @chars ~c"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   @short_token_len 8
