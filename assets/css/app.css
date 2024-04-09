@@ -11,17 +11,15 @@
   --lightgray: #d3d6da;
 }
 
-.game-meta {
-  .show {
-    &.correct {
-      background-color: var(--correct);
-    }
-    &.incorrect {
-      background-color: var(--incorrect);
-    }
-    &.present {
-      background-color: var(--present);
-    }
+.result {
+  &.correct {
+    background-color: var(--correct);
+  }
+  &.incorrect {
+    background-color: var(--incorrect);
+  }
+  &.present {
+    background-color: var(--present);
   }
 }
 
@@ -31,6 +29,11 @@
 
 .pulse {
   animation: pulse 0.65s infinite;
+}
+
+.lightning {
+  animation: flash 2s infinite;
+  animation-timing-functtion: step-end;
 }
 
 @keyframes reveal {
@@ -53,5 +56,38 @@
 
   100% {
     transform: scale(0.98);
+  }
+}
+
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  3% {
+    opacity: 0.4;
+  }
+  6% {
+    opacity: 1;
+  }
+  7% {
+    opacity: 0.4;
+  }
+  8% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 0.4;
+  }
+  10% {
+    opacity: 1;
+  }
+  89% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.4;
   }
 }

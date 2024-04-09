@@ -13,7 +13,6 @@ defmodule BaddlWeb.WordleLive do
   alias BaddlWeb.Presence
   alias Baddl.Games.Room
   alias Baddl.Games
-  alias Baddl.GameRegistry
 
   @topic "game:"
 
@@ -23,14 +22,60 @@ defmodule BaddlWeb.WordleLive do
       :if={String.length(@winner) > 0}
       class={
         if String.length(@winner) > 0 do
-          "reveal"
+          "reveal space-y-4"
         else
-          ""
+          "space-y-4"
         end
       }
     >
-      <%= @winner %>
-      <.button phx-click="new_game">New Game</.button>
+      <div class="flex flex-row justify-center items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6 text-yellow-500 lightning"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+          />
+        </svg>
+        <h2 class="text-center text-3xl mx-3 uppercase">
+          <%= @winner %> Won! (<%= @answer.result %>)
+        </h2>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6 text-yellow-500 lightning"
+          style="animation-delay: 0.9s"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+          />
+        </svg>
+      </div>
+      <!-- <div class="flex flex-row justify-center items-center"> -->
+      <!--
+      <%= Enum.with_index(0..5, fn _guess, idx -> %>
+        -->
+        <!--     <span -->
+        <!--       class="reveal result correct w-6 h-6 inline-block mx-0.5" -->
+        <!--       style={"animation-delay: #{idx * 0.1}s"} -->
+        <!--     > -->
+        <!--     </span> -->
+        <!--
+      <% end) %>
+      -->
+      <!-- </div> -->
+      <.button phx-click="new_game" class="w-full">Start New Game</.button>
     </div>
     <div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
       waiting for all players to join...
@@ -45,7 +90,7 @@ defmodule BaddlWeb.WordleLive do
               <span
                 phx-hook="AnimatePlayer"
                 id={"#{player}-guess-#{idx}"}
-                class={"show #{String.downcase(guess)} w-3 h-3 inline-block"}
+                class={"result #{String.downcase(guess)} w-3 h-3 inline-block"}
                 style={"animation-delay: #{idx * 0.1}s"}
               >
               </span>
@@ -77,7 +122,8 @@ defmodule BaddlWeb.WordleLive do
         |> assign(room_id: id)
         |> assign(messages: %{})
         |> assign(game_ready: false)
-        |> assign(winner: "")
+        # |> assign(winner: "")
+        |> assign(winner: "John")
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
@@ -97,6 +143,7 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
+  # TODO: update this and the UI to show the player's name, how many guesses it took them, and the answer
   def handle_event("handle_win", _payload, socket) do
     Endpoint.broadcast(@topic <> socket.assigns.room_id, "handle_game_won", %{
       player: socket.assigns.name
@@ -107,8 +154,18 @@ defmodule BaddlWeb.WordleLive do
 
   def handle_event("new_game", _payload, socket) do
     room_id = socket.assigns.room_id
-    GameRegistry.merge(room_id, %{answer: nil})
-    Endpoint.broadcast(@topic <> socket.assigns.room_id, "handle_new_game", %{})
+
+    case Games.create_new_game(room_id) do
+      {:ok, _results} ->
+        Endpoint.broadcast(@topic <> room_id, "handle_new_game", %{})
+        {:noreply, socket}
+
+      {:error, _errors} ->
+        socket
+        |> put_flash(:error, "Failed to start a new game. Please create a new game room.")
+        |> push_navigate(to: "/")
+        |> then(fn socket -> {:noreply, socket} end)
+    end
 
     {:noreply, socket}
   end
@@ -117,6 +174,8 @@ defmodule BaddlWeb.WordleLive do
         %{topic: @topic <> game_token, event: "handle_new_game", payload: _payload},
         socket
       ) do
+    Logger.info("#{__MODULE__} handle_new_game")
+
     socket
     |> assign(winner: "")
     |> assign_async(:answer, fn -> get_answer(game_token) end)
@@ -128,16 +187,20 @@ defmodule BaddlWeb.WordleLive do
         %{topic: @topic <> game_token, event: "check_readiness", payload: _payload},
         socket
       ) do
+    Logger.info("#{__MODULE__} check_readiness")
     room = Games.get_active_room(game_token)
 
     {:noreply, assign(socket, game_ready: game_ready?(game_token, room.num_players))}
   end
 
   def handle_info(%{topic: _topic, event: "handle_readiness", payload: payload}, socket) do
+    Logger.info("#{__MODULE__} handle_readiness")
     {:noreply, assign(socket, game_ready: payload.ready)}
   end
 
   def handle_info(%{topic: _topic, event: "handle_set_answer", payload: payload}, socket) do
+    Logger.info("#{__MODULE__} handle_set_answer")
+
     if socket.assigns.answer do
       {:noreply, socket}
     else
@@ -146,6 +209,8 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
+    Logger.info("#{__MODULE__} handle_player_guess")
+
     socket
     |> update_player_state(payload)
     |> push_event("animate-player", %{player: payload.player})
@@ -153,6 +218,8 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_info(%{topic: _topic, event: "handle_game_won", payload: payload}, socket) do
+    Logger.info("#{__MODULE__} handle_game_won")
+
     socket
     |> assign(winner: payload.player)
     |> then(fn socket -> {:noreply, socket} end)

@@ -19,7 +19,6 @@ defmodule Baddl.Application do
       # Start a worker by calling: Baddl.Worker.start_link(arg)
       # {Baddl.Worker, arg},
       # Start to serve requests, typically the last entry
-      Baddl.GameRegistry,
       BaddlWeb.Presence,
       BaddlWeb.Endpoint
     ]
