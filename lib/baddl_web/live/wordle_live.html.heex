@@ -1,0 +1,83 @@
+<div
+  :if={String.length(@winner) > 0}
+  class={
+    if String.length(@winner) > 0 do
+      "reveal space-y-4"
+    else
+      "space-y-4"
+    end
+  }
+>
+  <div class="flex flex-row justify-center items-center">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="w-6 h-6 text-yellow-500 lightning"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+      />
+    </svg>
+    <h2 class="text-center text-3xl mx-3 uppercase">
+      <%= @winner %> Won! (<%= @answer.result %>)
+    </h2>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="w-6 h-6 text-yellow-500 lightning"
+      style="animation-delay: 0.9s"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+      />
+    </svg>
+  </div>
+  <!-- <div class="flex flex-row justify-center items-center"> -->
+  <!--
+  <%= Enum.with_index(0..5, fn _guess, idx -> %>
+    -->
+    <!--     <span -->
+    <!--       class="reveal result correct w-6 h-6 inline-block mx-0.5" -->
+    <!--       style={"animation-delay: #{idx * 0.1}s"} -->
+    <!--     > -->
+    <!--     </span> -->
+    <!--
+  <% end) %>
+  -->
+  <!-- </div> -->
+  <.button phx-click="new_game" class="w-full">Start New Game</.button>
+</div>
+<div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
+  waiting for all players to join...
+</div>
+<.async_result :let={answer} :if={@game_ready && String.length(@winner) == 0} assign={@answer}>
+  <:failed :let={_failure}>there was an error creating the game</:failed>
+  <div :if={@messages} class="game-meta grid gap-4 grid-cols-2">
+    <div :for={{player, summary} <- @messages} class="flex flex-row justify-center mb-4">
+      <span class="mr-4"><%= player %>:</span>
+      <div>
+        <%= Enum.with_index(summary.latest_guess, fn guess, idx -> %>
+          <span
+            phx-hook="AnimatePlayer"
+            id={"#{player}-guess-#{idx}"}
+            class={"result #{String.downcase(guess)} w-3 h-3 inline-block"}
+            style={"animation-delay: #{idx * 0.1}s"}
+          >
+          </span>
+        <% end) %>
+        <span class="mr-4">(attempt <%= summary.latest_guess_num %>)</span>
+      </div>
+    </div>
+  </div>
+  <div id="wordle-game" phx-hook="Wordle" phx-update="ignore" data-answer={answer}></div>
+</.async_result>
