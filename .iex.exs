@@ -3,4 +3,4 @@ alias Baddl.Repo
 # Contexts
 alias Baddl.Games
 # Context Modules
-alias Baddl.Games.Room
+alias Baddl.Games.{Room, Game}
