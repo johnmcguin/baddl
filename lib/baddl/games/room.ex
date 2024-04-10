@@ -51,17 +51,30 @@ defmodule Baddl.Games.Room do
     types = %{display_name: :string, num_players: :integer}
 
     {%{}, types}
-    |> Ecto.Changeset.cast(params, Map.keys(types))
-    |> Ecto.Changeset.validate_required([:display_name])
+    |> cast(params, Map.keys(types))
+    |> validate_required([:display_name])
   end
 
   @doc false
-  def changeset_for_join(params) do
+  def changeset_for_join(params, present_names \\ []) do
     types = %{room_id: :string, display_name: :string}
 
     {%{}, types}
-    |> Ecto.Changeset.cast(params, Map.keys(types))
-    |> Ecto.Changeset.validate_required([:room_id, :display_name])
-    |> Ecto.Changeset.validate_length(:room_id, is: @short_token_len)
+    |> cast(params, Map.keys(types))
+    |> validate_required([:room_id, :display_name])
+    |> validate_length(:room_id, is: @short_token_len)
+    |> validate_unique_name(:display_name, present_names)
+  end
+
+  defp validate_unique_name(changeset, field, values) do
+    validate_change(changeset, field, fn _f, value ->
+      case Enum.any?(values, fn v -> v == value end) do
+        true ->
+          [{field, "#{value} is already in the game room. Please choose another name."}]
+
+        false ->
+          []
+      end
+    end)
   end
 end

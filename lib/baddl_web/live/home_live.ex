@@ -2,6 +2,7 @@ defmodule BaddlWeb.HomeLive do
   use BaddlWeb, :live_view
   alias Baddl.Games.Room
   alias Baddl.Repo
+  alias BaddlWeb.Presence
 
   def mount(_params, _session, socket) do
     create_changeset = Room.changeset_for_create(%{})
@@ -50,12 +51,13 @@ defmodule BaddlWeb.HomeLive do
   def handle_event("save", %{"join_game" => join_game_params}, socket) do
     name = join_game_params["display_name"]
     room_id = join_game_params["room_id"]
-    changeset = Room.changeset_for_create(join_game_params)
+    present_names = present_names("game:" <> room_id)
+    changeset = Room.changeset_for_join(join_game_params, present_names)
 
     if changeset.valid? do
       {:noreply, push_navigate(socket, to: "/game/#{room_id}?name=#{name}")}
     else
-      {:noreply, assign_join_form(socket, changeset)}
+      {:noreply, assign_join_form(socket, Map.put(changeset, :action, :validate))}
     end
   end
 
@@ -67,5 +69,11 @@ defmodule BaddlWeb.HomeLive do
   def handle_event("validate", %{"join_game" => join_game_params}, socket) do
     changeset = Room.changeset_for_join(join_game_params)
     {:noreply, assign_join_form(socket, Map.put(changeset, :action, :validate))}
+  end
+
+  defp present_names(topic) do
+    topic
+    |> Presence.list()
+    |> Map.keys()
   end
 end
