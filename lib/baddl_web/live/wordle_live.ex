@@ -34,6 +34,7 @@ defmodule BaddlWeb.WordleLive do
         socket
         |> assign(name: name)
         |> assign(room_id: id)
+        |> assign(game_id: get_game_id(room))
         |> assign(messages: %{})
         |> assign(game_ready: false)
         |> assign(winner: "")
@@ -183,5 +184,15 @@ defmodule BaddlWeb.WordleLive do
 
       Map.merge(messages, new_player_state)
     end)
+  end
+
+  defp get_game_id(%Room{games: games} = room) do
+    case List.first(games) do
+      nil ->
+        "initial"
+
+      game ->
+        game.id
+    end
   end
 end

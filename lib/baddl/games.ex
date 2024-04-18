@@ -41,6 +41,8 @@ defmodule Baddl.Games do
   """
   def get_active_room(short_token) do
     query_active_room(short_token)
+    |> room_active_game()
+    |> preload([g, r], games: g)
     |> Repo.one()
   end
 
@@ -95,11 +97,16 @@ defmodule Baddl.Games do
   """
   def get_answer_for_current_game(short_token) do
     query_active_room(short_token)
+    |> room_active_game()
+    |> select([r, g], g.answer)
+    |> Repo.one()
+  end
+
+  defp room_active_game(room_query) do
+    room_query
     |> join(:inner, [r], g in assoc(r, :games))
     |> order_by([r, g], desc: g.inserted_at)
-    |> select([r, g], g.answer)
     |> first()
-    |> Repo.one()
   end
 
   defp query_active_room(short_token) do

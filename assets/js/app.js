@@ -62,13 +62,10 @@ let liveSocket = new LiveSocket("/live", Socket, {
     Wordle: {
       mounted() {
         if (window?.ELM_APP) {
-          /**
-           * Need to embed the app because when used in the LiveView,
-           * updates to the socket, will cause mounted to run again.
-           * This prevents the app from being completely wiped out.
-           * */
           const appContainer = document.createElement("div");
-          const { answer } = this.el.dataset;
+          // game is game id - room is room id
+          // save to LS a record of {room_id: { game_id: ['guesses'] }}
+          const { answer, game, room } = this.el.dataset;
           const flags = answer ? { word: answer } : null;
           this.el.appendChild(appContainer);
 
