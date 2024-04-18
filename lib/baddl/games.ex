@@ -7,7 +7,7 @@ defmodule Baddl.Games do
   alias Ecto.Multi
 
   alias Baddl.Repo
-  alias Baddl.Games.{Room, Game}
+  alias Baddl.Games.{Room, Game, Word}
 
   @doc """
   Gets a single room.
@@ -59,6 +59,26 @@ defmodule Baddl.Games do
       end
     end)
     |> Repo.transaction()
+  end
+
+  @doc """
+  Fetches a random word to create a game with
+
+
+  ## Examples
+
+      iex> get_random_word()
+      "place"
+
+      iex> get_active_room()
+      nil
+  """
+  def get_random_word() do
+    Word
+    |> order_by(fragment("RANDOM()"))
+    |> limit(1)
+    |> select([w], w.word)
+    |> Repo.one()
   end
 
   @doc """

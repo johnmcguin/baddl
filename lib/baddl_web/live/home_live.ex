@@ -1,5 +1,6 @@
 defmodule BaddlWeb.HomeLive do
   use BaddlWeb, :live_view
+  alias Baddl.Games
   alias Baddl.Games.Room
   alias Baddl.Repo
   alias BaddlWeb.Presence
@@ -31,8 +32,7 @@ defmodule BaddlWeb.HomeLive do
     num_players = create_game_params["num_players"]
     changeset = Room.changeset_for_create(%{display_name: name, num_players: num_players})
 
-    # replace with db
-    answer = Enum.random(~w(place tests space demos there three slate pacer))
+    answer = Games.get_random_word()
     room = Room.create_with_answer(%{num_players: num_players, games: [%{answer: answer}]})
 
     if changeset.valid? do
