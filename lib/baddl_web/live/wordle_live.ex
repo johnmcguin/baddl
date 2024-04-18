@@ -14,7 +14,8 @@ defmodule BaddlWeb.WordleLive do
   alias Baddl.Games.Room
   alias Baddl.Games
 
-  @topic "game:"
+  @current_game "game:"
+  @all_players "all_players"
 
   def handle_params(%{"id" => id, "name" => name}, _url, socket) do
     case Games.get_active_room(id) do
@@ -25,9 +26,10 @@ defmodule BaddlWeb.WordleLive do
         |> then(fn socket -> {:noreply, socket} end)
 
       %Room{} = room ->
-        Endpoint.subscribe(@topic <> id)
-        Presence.track(self(), @topic <> id, name, %{name: name})
-        broadcast_readiness(@topic <> id, game_ready?(id, room.num_players))
+        Endpoint.subscribe(@current_game <> id)
+        Presence.track(self(), @current_game <> id, name, %{name: name})
+        Presence.track(self(), @all_players, "game_" <> id <> "_" <> name, %{name: name})
+        broadcast_readiness(@current_game <> id, game_ready?(id, room.num_players))
 
         socket
         |> assign(name: name)
@@ -45,18 +47,22 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_event("handle_guess", payload, socket) do
-    Endpoint.broadcast_from(self(), @topic <> socket.assigns.room_id, "handle_player_guess", %{
-      player: socket.assigns.name,
-      latest_guess: payload["guessState"],
-      latest_guess_num: payload["lastGuess"]
-    })
+    Endpoint.broadcast_from(
+      self(),
+      @current_game <> socket.assigns.room_id,
+      "handle_player_guess",
+      %{
+        player: socket.assigns.name,
+        latest_guess: payload["guessState"],
+        latest_guess_num: payload["lastGuess"]
+      }
+    )
 
     {:noreply, socket}
   end
 
-  # TODO: update this and the UI to show the player's name, how many guesses it took them, and the answer
   def handle_event("handle_win", _payload, socket) do
-    Endpoint.broadcast(@topic <> socket.assigns.room_id, "handle_game_won", %{
+    Endpoint.broadcast(@current_game <> socket.assigns.room_id, "handle_game_won", %{
       player: socket.assigns.name
     })
 
@@ -68,7 +74,7 @@ defmodule BaddlWeb.WordleLive do
 
     case Games.create_new_game(room_id) do
       {:ok, _results} ->
-        Endpoint.broadcast(@topic <> room_id, "handle_new_game", %{})
+        Endpoint.broadcast(@current_game <> room_id, "handle_new_game", %{})
         {:noreply, socket}
 
       {:error, _errors} ->
@@ -82,7 +88,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_info(
-        %{topic: @topic <> game_token, event: "handle_new_game", payload: _payload},
+        %{topic: @current_game <> game_token, event: "handle_new_game", payload: _payload},
         socket
       ) do
     Logger.info("#{__MODULE__} handle_new_game")
@@ -95,7 +101,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   def handle_info(
-        %{topic: @topic <> game_token, event: "check_readiness", payload: _payload},
+        %{topic: @current_game <> game_token, event: "check_readiness", payload: _payload},
         socket
       ) do
     Logger.info("#{__MODULE__} check_readiness")
@@ -156,7 +162,7 @@ defmodule BaddlWeb.WordleLive do
   end
 
   defp game_ready?(game_token, expected_players) do
-    Presence.list(@topic <> game_token)
+    Presence.list(@current_game <> game_token)
     |> Map.keys()
     |> Kernel.length()
     |> Kernel.==(expected_players)

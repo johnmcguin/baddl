@@ -35,4 +35,9 @@ defmodule BaddlWeb.Presence do
     Endpoint.broadcast("game:" <> game_token, "check_readiness", %{})
     {:ok, state}
   end
+
+  def handle_metas(_topic, _diff, _presences, state) do
+    Endpoint.broadcast("all_players", "player_joined", %{})
+    {:ok, state}
+  end
 end

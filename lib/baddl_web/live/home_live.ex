@@ -3,14 +3,18 @@ defmodule BaddlWeb.HomeLive do
   alias Baddl.Games
   alias Baddl.Games.Room
   alias Baddl.Repo
-  alias BaddlWeb.Presence
+  alias BaddlWeb.{Presence, Endpoint}
+
+  @all_players "all_players"
 
   def mount(_params, _session, socket) do
     create_changeset = Room.changeset_for_create(%{})
     join_changeset = Room.changeset_for_join(%{})
+    Endpoint.subscribe(@all_players)
 
     socket =
       socket
+      |> assign(total_players: players_present(@all_players))
       |> assign_create_form(create_changeset)
       |> assign_join_form(join_changeset)
 
@@ -71,9 +75,21 @@ defmodule BaddlWeb.HomeLive do
     {:noreply, assign_join_form(socket, Map.put(changeset, :action, :validate))}
   end
 
+  def handle_info(%{topic: @all_players}, socket) do
+    socket
+    |> assign(:total_players, players_present(@all_players))
+    |> then(fn socket -> {:noreply, socket} end)
+  end
+
   defp present_names(topic) do
     topic
     |> Presence.list()
     |> Map.keys()
+  end
+
+  defp players_present(topic) do
+    topic
+    |> Presence.list()
+    |> Enum.count()
   end
 end
