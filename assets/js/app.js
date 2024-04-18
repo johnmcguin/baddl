@@ -29,6 +29,15 @@ let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
   hooks: {
+    ShowPlayerCount: {
+      mounted() {
+        const ls = localStorage.getItem("should_show_baddl_count");
+        const shouldShow = ls === "true";
+        if (!shouldShow) {
+          this.el.style.display = "none";
+        }
+      },
+    },
     AnimatePlayer: {
       mounted() {
         this.handleEvent("animate-player", function ({ player }) {
