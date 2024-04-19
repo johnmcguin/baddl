@@ -63,10 +63,13 @@ let liveSocket = new LiveSocket("/live", Socket, {
       mounted() {
         if (window?.ELM_APP) {
           const appContainer = document.createElement("div");
-          // game is game id - room is room id
-          // save to LS a record of {room_id: { game_id: ['guesses'] }}
           const { answer, game, room } = this.el.dataset;
-          const flags = answer ? { word: answer } : null;
+          const history = JSON.parse(localStorage.getItem(room));
+          const roomHistory = history ? history[game] : { [game]: [] };
+          const flags = {
+            word: answer,
+            history: roomHistory,
+          };
           this.el.appendChild(appContainer);
 
           const app = window.ELM_APP.Main.init({
@@ -86,16 +89,29 @@ let liveSocket = new LiveSocket("/live", Socket, {
               });
             }, 1500);
           });
+
+          app.ports.persistGuess.subscribe((guess) => {
+            const gameState = JSON.parse(localStorage.getItem(room));
+            const roomHistory = gameState ? gameState[game] : { [game]: [] };
+            if (roomHistory?.length) {
+              localStorage.setItem(
+                room,
+                JSON.stringify({ [game]: [...roomHistory, guess] }),
+              );
+            } else {
+              localStorage.setItem(room, JSON.stringify({ [game]: [guess] }));
+            }
+          });
         }
       },
     },
   },
 });
-
 // Show progress bar on live navigation and form submits
 topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
 window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
 window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+window.addEventListener("phx:set_game_id", (e) => console.log(e));
 
 // connect if there are any LiveViews on the page
 liveSocket.connect();

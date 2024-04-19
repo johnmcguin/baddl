@@ -13,6 +13,7 @@ import Json.Decode as D
 
 type alias Flags =
     { word : String
+    , history : List String
     }
 
 
@@ -33,15 +34,17 @@ init : D.Value -> ( Model, Cmd Msg )
 init flags =
     case D.decodeValue flagsDecoder flags of
         Ok result ->
-            ( Game <| Game.init result.word, Cmd.none )
+            ( Game <| Game.init result.word result.history, Cmd.none )
 
         Err _ ->
-            ( Game <| Game.init "", Cmd.map ToGame Game.getRandomWord )
+            ( Game <| Game.init "" [], Cmd.map ToGame Game.getRandomWord )
 
 
 flagsDecoder : D.Decoder Flags
 flagsDecoder =
-    D.map Flags (D.field "word" D.string)
+    D.map2 Flags
+        (D.field "word" D.string)
+        (D.field "history" (D.list D.string))
 
 
 

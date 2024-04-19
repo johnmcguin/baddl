@@ -24,6 +24,9 @@ port submitGuess : SubmitGuessPortable -> Cmd msg
 port submitWin : () -> Cmd msg
 
 
+port persistGuess : String -> Cmd msg
+
+
 
 -- Model
 
@@ -80,18 +83,112 @@ type Model
     | GameEnd GameResult
 
 
-init : String -> Model
-init solution =
-    InProgress
-        { keyboardLetters = initKeyboardDictLetters
-        , keyboardDictionary = initKeyboardDict
-        , currentGuess = []
-        , currentRow = 0
-        , board = initBoard
-        , solution = solution
-        , shakeRow = Nothing
-        , message = Nothing
-        }
+init : String -> List String -> Model
+init solution history =
+    let
+        initialState : GameInProgress
+        initialState =
+            { keyboardLetters = initKeyboardDictLetters
+            , keyboardDictionary = initKeyboardDict
+            , currentGuess = []
+            , currentRow = 0
+            , board = initBoard
+            , solution = solution
+            , shakeRow = Nothing
+            , message = Nothing
+            }
+    in
+    case history of
+        [] ->
+            InProgress initialState
+
+        guesses ->
+            let
+                pendingBoard : List KeyboardRow
+                pendingBoard =
+                    initialState.board
+                        |> List.indexedMap
+                            (\idx row ->
+                                case LE.getAt idx guesses of
+                                    Nothing ->
+                                        row
+
+                                    Just guess ->
+                                        guess
+                                            |> String.toList
+                                            |> List.map (\c -> ( c, Pending ))
+                            )
+
+                board : List KeyboardRow
+                board =
+                    LE.indexedFoldl
+                        (\idx _ boardAccum ->
+                            case LE.getAt idx guesses of
+                                Nothing ->
+                                    boardAccum
+
+                                Just _ ->
+                                    applyGuess idx solution boardAccum
+                        )
+                        pendingBoard
+                        (List.repeat 6 "")
+
+                updatedDict : KeyboardDictionary
+                updatedDict =
+                    guesses
+                        |> List.map String.toList
+                        |> List.foldl (\guess dictAccum -> updateKeyboardDict guess dictAccum solution) initialState.keyboardDictionary
+
+                gameWon : Bool
+                gameWon =
+                    guesses
+                        |> List.any (\guess -> guess == solution)
+
+                gameLost : Bool
+                gameLost =
+                    let
+                        noneCorrect : Bool
+                        noneCorrect =
+                            guesses
+                                |> List.any (\guess -> guess /= solution)
+                    in
+                    if List.length guesses == 5 && noneCorrect then
+                        True
+
+                    else
+                        False
+            in
+            if gameWon then
+                GameEnd
+                    { solution = solution
+                    , board = board
+                    , result = WonIn <| List.length guesses
+                    , message = Nothing
+                    , keyboardLetters = initialState.keyboardLetters
+                    , keyboardDictionary = updatedDict
+                    }
+
+            else if gameLost then
+                GameEnd
+                    { solution = solution
+                    , board = board
+                    , result = Lost
+                    , message = Nothing
+                    , keyboardLetters = initialState.keyboardLetters
+                    , keyboardDictionary = updatedDict
+                    }
+
+            else
+                InProgress
+                    { keyboardLetters = initKeyboardDictLetters
+                    , keyboardDictionary = updatedDict
+                    , currentGuess = []
+                    , currentRow = List.length guesses
+                    , board = board
+                    , solution = solution
+                    , shakeRow = Nothing
+                    , message = Nothing
+                    }
 
 
 
@@ -214,7 +311,7 @@ update msg model =
                 board : List KeyboardRow
                 board =
                     if shouldApplyGuess then
-                        applyGuess gameState
+                        applyGuess gameState.currentRow gameState.solution gameState.board
 
                     else
                         gameState.board
@@ -299,7 +396,7 @@ update msg model =
                         , message = message
                         , keyboardDictionary = newDict shouldApplyGuess
                     }
-                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess (SubmitGuessPortable guess guessAsStateArray (gameState.currentRow + 1)) ]
+                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess (SubmitGuessPortable guess guessAsStateArray (gameState.currentRow + 1)), persistGuess guess ]
                 )
 
         ( InProgress gameState, Delete ) ->
@@ -551,11 +648,11 @@ getRandomWord =
     Random.generate GotRandomIndex generator
 
 
-applyGuess : GameInProgress -> List KeyboardRow
-applyGuess game =
-    game.board
-        |> List.indexedMap (markCorrect game.currentRow game.solution)
-        |> List.indexedMap (markOtherTiles game.currentRow game.solution)
+applyGuess : Int -> String -> List KeyboardRow -> List KeyboardRow
+applyGuess row solution board =
+    board
+        |> List.indexedMap (markCorrect row solution)
+        |> List.indexedMap (markOtherTiles row solution)
 
 
 successMessage : Int -> Maybe String

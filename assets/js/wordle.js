@@ -9659,13 +9659,20 @@
         var $author$project$Main$ToGame = function(a) {
           return { $: "ToGame", a };
         };
-        var $author$project$Main$Flags = function(word) {
-          return { word };
-        };
-        var $author$project$Main$flagsDecoder = A2(
-          $elm$json$Json$Decode$map,
+        var $author$project$Main$Flags = F2(
+          function(word, history2) {
+            return { history: history2, word };
+          }
+        );
+        var $author$project$Main$flagsDecoder = A3(
+          $elm$json$Json$Decode$map2,
           $author$project$Main$Flags,
-          A2($elm$json$Json$Decode$field, "word", $elm$json$Json$Decode$string)
+          A2($elm$json$Json$Decode$field, "word", $elm$json$Json$Decode$string),
+          A2(
+            $elm$json$Json$Decode$field,
+            "history",
+            $elm$json$Json$Decode$list($elm$json$Json$Decode$string)
+          )
         );
         var $author$project$Game$GotRandomIndex = function(a) {
           return { $: "GotRandomIndex", a };
@@ -9865,9 +9872,205 @@
           var generator = A2($elm$random$Random$int, 0, $author$project$Words$wordLength);
           return A2($elm$random$Random$generate, $author$project$Game$GotRandomIndex, generator);
         }();
+        var $author$project$Game$GameEnd = function(a) {
+          return { $: "GameEnd", a };
+        };
         var $author$project$Game$InProgress = function(a) {
           return { $: "InProgress", a };
         };
+        var $author$project$Game$Lost = { $: "Lost" };
+        var $author$project$Game$Pending = { $: "Pending" };
+        var $author$project$Game$WonIn = function(a) {
+          return { $: "WonIn", a };
+        };
+        var $elm$core$List$any = F2(
+          function(isOkay, list) {
+            any:
+              while (true) {
+                if (!list.b) {
+                  return false;
+                } else {
+                  var x = list.a;
+                  var xs = list.b;
+                  if (isOkay(x)) {
+                    return true;
+                  } else {
+                    var $temp$isOkay = isOkay, $temp$list = xs;
+                    isOkay = $temp$isOkay;
+                    list = $temp$list;
+                    continue any;
+                  }
+                }
+              }
+          }
+        );
+        var $author$project$Game$Correct = { $: "Correct" };
+        var $elm$core$String$cons = _String_cons;
+        var $elm$core$String$fromChar = function(_char) {
+          return A2($elm$core$String$cons, _char, "");
+        };
+        var $elm$core$List$member = F2(
+          function(x, xs) {
+            return A2(
+              $elm$core$List$any,
+              function(a) {
+                return _Utils_eq(a, x);
+              },
+              xs
+            );
+          }
+        );
+        var $author$project$Game$checkCorrectChar = F4(
+          function(ch, idx, word, currentLetterState) {
+            var charAsString = $elm$core$String$fromChar(ch);
+            var occurrences = A2($elm$core$String$indexes, charAsString, word);
+            var isCorrect = A2($elm$core$List$member, idx, occurrences);
+            return isCorrect ? $author$project$Game$Correct : currentLetterState;
+          }
+        );
+        var $author$project$Game$markCorrect = F4(
+          function(activeGameRow, solution, boardIdx, tiles) {
+            return _Utils_eq(boardIdx, activeGameRow) ? A2(
+              $elm$core$List$indexedMap,
+              F2(
+                function(letterIdx, tile) {
+                  var _v0 = tile;
+                  var _char = _v0.a;
+                  var currentLetterState = _v0.b;
+                  var letterState = A4($author$project$Game$checkCorrectChar, _char, letterIdx, solution, currentLetterState);
+                  return _Utils_Tuple2(_char, letterState);
+                }
+              ),
+              tiles
+            ) : tiles;
+          }
+        );
+        var $author$project$Game$Incorrect = { $: "Incorrect" };
+        var $author$project$Game$Present = { $: "Present" };
+        var $author$project$Game$checkOtherStatesChar = F3(
+          function(ch, word, markedLetterState) {
+            var isPresent = F2(
+              function(_char, string) {
+                return function(len) {
+                  return len > 0;
+                }(
+                  $elm$core$List$length(
+                    function(search) {
+                      return A2($elm$core$String$indexes, search, string);
+                    }(
+                      $elm$core$String$fromChar(_char)
+                    )
+                  )
+                );
+              }
+            );
+            var currentlyCorrect = function() {
+              if (markedLetterState.$ === "Correct") {
+                return true;
+              } else {
+                return false;
+              }
+            }();
+            return currentlyCorrect ? $author$project$Game$Correct : A2(isPresent, ch, word) ? $author$project$Game$Present : $author$project$Game$Incorrect;
+          }
+        );
+        var $elm$core$String$fromList = _String_fromList;
+        var $elm$core$String$foldr = _String_foldr;
+        var $elm$core$String$toList = function(string) {
+          return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+        };
+        var $elm$core$String$trim = _String_trim;
+        var $author$project$Game$markOtherTiles = F4(
+          function(activeGameRow, solution, boardIdx, tiles) {
+            var calcNewSolution = F2(
+              function(tile, solutionChar) {
+                if (tile.b.$ === "Correct") {
+                  var _v2 = tile.b;
+                  return _Utils_chr("_");
+                } else {
+                  return solutionChar;
+                }
+              }
+            );
+            var calculatedSolution = function(currentSolution) {
+              return $elm$core$String$trim(
+                $elm$core$String$fromList(
+                  A3(
+                    $elm$core$List$map2,
+                    calcNewSolution,
+                    tiles,
+                    $elm$core$String$toList(currentSolution)
+                  )
+                )
+              );
+            };
+            return _Utils_eq(boardIdx, activeGameRow) ? A2(
+              $elm$core$List$map,
+              function(tile) {
+                var _v0 = tile;
+                var _char = _v0.a;
+                var currentLetterState = _v0.b;
+                var newLetterState = A3(
+                  $author$project$Game$checkOtherStatesChar,
+                  _char,
+                  calculatedSolution(solution),
+                  currentLetterState
+                );
+                return _Utils_Tuple2(_char, newLetterState);
+              },
+              tiles
+            ) : tiles;
+          }
+        );
+        var $author$project$Game$applyGuess = F3(
+          function(row, solution, board) {
+            return A2(
+              $elm$core$List$indexedMap,
+              A2($author$project$Game$markOtherTiles, row, solution),
+              A2(
+                $elm$core$List$indexedMap,
+                A2($author$project$Game$markCorrect, row, solution),
+                board
+              )
+            );
+          }
+        );
+        var $elm$core$List$head = function(list) {
+          if (list.b) {
+            var x = list.a;
+            var xs = list.b;
+            return $elm$core$Maybe$Just(x);
+          } else {
+            return $elm$core$Maybe$Nothing;
+          }
+        };
+        var $elm_community$list_extra$List$Extra$getAt = F2(
+          function(idx, xs) {
+            return idx < 0 ? $elm$core$Maybe$Nothing : $elm$core$List$head(
+              A2($elm$core$List$drop, idx, xs)
+            );
+          }
+        );
+        var $elm_community$list_extra$List$Extra$indexedFoldl = F3(
+          function(func, acc, list) {
+            var step = F2(
+              function(x, _v0) {
+                var i = _v0.a;
+                var thisAcc = _v0.b;
+                return _Utils_Tuple2(
+                  i + 1,
+                  A3(func, i, x, thisAcc)
+                );
+              }
+            );
+            return A3(
+              $elm$core$List$foldl,
+              step,
+              _Utils_Tuple2(0, acc),
+              list
+            ).b;
+          }
+        );
         var $author$project$Game$Blank = { $: "Blank" };
         var $elm$core$List$repeatHelp = F3(
           function(result, n, value) {
@@ -10058,25 +10261,171 @@
             )
           ]
         );
-        var $author$project$Game$init = function(solution) {
-          return $author$project$Game$InProgress(
-            { board: $author$project$Game$initBoard, currentGuess: _List_Nil, currentRow: 0, keyboardDictionary: $author$project$Game$initKeyboardDict, keyboardLetters: $author$project$Game$initKeyboardDictLetters, message: $elm$core$Maybe$Nothing, shakeRow: $elm$core$Maybe$Nothing, solution }
-          );
-        };
+        var $author$project$Game$updateKeyboardDict = F3(
+          function(currentGuess, currentDict, solution) {
+            return A3(
+              $elm_community$list_extra$List$Extra$indexedFoldl,
+              F3(
+                function(idx, ch, dict) {
+                  return A3(
+                    $elm$core$Dict$update,
+                    ch,
+                    function(maybeLetterState) {
+                      var checkOthers = A2($author$project$Game$checkOtherStatesChar, ch, solution);
+                      var checkCorrect = A3($author$project$Game$checkCorrectChar, ch, idx, solution);
+                      var checkAll = A2($elm$core$Basics$composeR, checkCorrect, checkOthers);
+                      _v0$4:
+                        while (true) {
+                          if (maybeLetterState.$ === "Just") {
+                            switch (maybeLetterState.a.$) {
+                              case "Blank":
+                                var _v1 = maybeLetterState.a;
+                                return $elm$core$Maybe$Just(
+                                  checkAll($author$project$Game$Blank)
+                                );
+                              case "Correct":
+                                var _v2 = maybeLetterState.a;
+                                return $elm$core$Maybe$Just($author$project$Game$Correct);
+                              case "Present":
+                                var _v3 = maybeLetterState.a;
+                                return $elm$core$Maybe$Just(
+                                  checkAll($author$project$Game$Present)
+                                );
+                              case "Incorrect":
+                                var _v4 = maybeLetterState.a;
+                                return $elm$core$Maybe$Just(
+                                  checkAll($author$project$Game$Incorrect)
+                                );
+                              default:
+                                break _v0$4;
+                            }
+                          } else {
+                            break _v0$4;
+                          }
+                        }
+                      return $elm$core$Maybe$Just($author$project$Game$Blank);
+                    },
+                    dict
+                  );
+                }
+              ),
+              currentDict,
+              currentGuess
+            );
+          }
+        );
+        var $author$project$Game$init = F2(
+          function(solution, history2) {
+            var initialState = { board: $author$project$Game$initBoard, currentGuess: _List_Nil, currentRow: 0, keyboardDictionary: $author$project$Game$initKeyboardDict, keyboardLetters: $author$project$Game$initKeyboardDictLetters, message: $elm$core$Maybe$Nothing, shakeRow: $elm$core$Maybe$Nothing, solution };
+            if (!history2.b) {
+              return $author$project$Game$InProgress(initialState);
+            } else {
+              var guesses = history2;
+              var updatedDict = A3(
+                $elm$core$List$foldl,
+                F2(
+                  function(guess, dictAccum) {
+                    return A3($author$project$Game$updateKeyboardDict, guess, dictAccum, solution);
+                  }
+                ),
+                initialState.keyboardDictionary,
+                A2($elm$core$List$map, $elm$core$String$toList, guesses)
+              );
+              var pendingBoard = A2(
+                $elm$core$List$indexedMap,
+                F2(
+                  function(idx, row) {
+                    var _v3 = A2($elm_community$list_extra$List$Extra$getAt, idx, guesses);
+                    if (_v3.$ === "Nothing") {
+                      return row;
+                    } else {
+                      var guess = _v3.a;
+                      return A2(
+                        $elm$core$List$map,
+                        function(c) {
+                          return _Utils_Tuple2(c, $author$project$Game$Pending);
+                        },
+                        $elm$core$String$toList(guess)
+                      );
+                    }
+                  }
+                ),
+                initialState.board
+              );
+              var gameWon = A2(
+                $elm$core$List$any,
+                function(guess) {
+                  return _Utils_eq(guess, solution);
+                },
+                guesses
+              );
+              var gameLost = function() {
+                var noneCorrect = A2(
+                  $elm$core$List$any,
+                  function(guess) {
+                    return !_Utils_eq(guess, solution);
+                  },
+                  guesses
+                );
+                return $elm$core$List$length(guesses) === 5 && noneCorrect ? true : false;
+              }();
+              var board = A3(
+                $elm_community$list_extra$List$Extra$indexedFoldl,
+                F3(
+                  function(idx, _v1, boardAccum) {
+                    var _v2 = A2($elm_community$list_extra$List$Extra$getAt, idx, guesses);
+                    if (_v2.$ === "Nothing") {
+                      return boardAccum;
+                    } else {
+                      return A3($author$project$Game$applyGuess, idx, solution, boardAccum);
+                    }
+                  }
+                ),
+                pendingBoard,
+                A2($elm$core$List$repeat, 6, "")
+              );
+              return gameWon ? $author$project$Game$GameEnd(
+                {
+                  board,
+                  keyboardDictionary: updatedDict,
+                  keyboardLetters: initialState.keyboardLetters,
+                  message: $elm$core$Maybe$Nothing,
+                  result: $author$project$Game$WonIn(
+                    $elm$core$List$length(guesses)
+                  ),
+                  solution
+                }
+              ) : gameLost ? $author$project$Game$GameEnd(
+                { board, keyboardDictionary: updatedDict, keyboardLetters: initialState.keyboardLetters, message: $elm$core$Maybe$Nothing, result: $author$project$Game$Lost, solution }
+              ) : $author$project$Game$InProgress(
+                {
+                  board,
+                  currentGuess: _List_Nil,
+                  currentRow: $elm$core$List$length(guesses),
+                  keyboardDictionary: updatedDict,
+                  keyboardLetters: $author$project$Game$initKeyboardDictLetters,
+                  message: $elm$core$Maybe$Nothing,
+                  shakeRow: $elm$core$Maybe$Nothing,
+                  solution
+                }
+              );
+            }
+          }
+        );
         var $author$project$Main$init = function(flags) {
           var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$flagsDecoder, flags);
           if (_v0.$ === "Ok") {
             var result = _v0.a;
             return _Utils_Tuple2(
               $author$project$Main$Game(
-                $author$project$Game$init(result.word)
+                A2($author$project$Game$init, result.word, result.history)
               ),
               $elm$core$Platform$Cmd$none
             );
           } else {
             return _Utils_Tuple2(
               $author$project$Main$Game(
-                $author$project$Game$init("")
+                A2($author$project$Game$init, "", _List_Nil)
               ),
               A2($elm$core$Platform$Cmd$map, $author$project$Main$ToGame, $author$project$Game$getRandomWord)
             );
@@ -10328,39 +10677,9 @@
         var $author$project$Main$subscriptions = function(_v0) {
           return $elm$browser$Browser$Events$onKeyUp($author$project$Main$keyDecoder);
         };
-        var $author$project$Game$Correct = { $: "Correct" };
-        var $author$project$Game$GameEnd = function(a) {
-          return { $: "GameEnd", a };
-        };
-        var $author$project$Game$Lost = { $: "Lost" };
-        var $author$project$Game$Pending = { $: "Pending" };
         var $author$project$Game$SubmitGuessPortable = F3(
           function(guess, guessState, lastGuess) {
             return { guess, guessState, lastGuess };
-          }
-        );
-        var $author$project$Game$WonIn = function(a) {
-          return { $: "WonIn", a };
-        };
-        var $elm$core$List$any = F2(
-          function(isOkay, list) {
-            any:
-              while (true) {
-                if (!list.b) {
-                  return false;
-                } else {
-                  var x = list.a;
-                  var xs = list.b;
-                  if (isOkay(x)) {
-                    return true;
-                  } else {
-                    var $temp$isOkay = isOkay, $temp$list = xs;
-                    isOkay = $temp$isOkay;
-                    list = $temp$list;
-                    continue any;
-                  }
-                }
-              }
           }
         );
         var $elm$core$List$all = F2(
@@ -10372,134 +10691,6 @@
             );
           }
         );
-        var $elm$core$String$cons = _String_cons;
-        var $elm$core$String$fromChar = function(_char) {
-          return A2($elm$core$String$cons, _char, "");
-        };
-        var $elm$core$List$member = F2(
-          function(x, xs) {
-            return A2(
-              $elm$core$List$any,
-              function(a) {
-                return _Utils_eq(a, x);
-              },
-              xs
-            );
-          }
-        );
-        var $author$project$Game$checkCorrectChar = F4(
-          function(ch, idx, word, currentLetterState) {
-            var charAsString = $elm$core$String$fromChar(ch);
-            var occurrences = A2($elm$core$String$indexes, charAsString, word);
-            var isCorrect = A2($elm$core$List$member, idx, occurrences);
-            return isCorrect ? $author$project$Game$Correct : currentLetterState;
-          }
-        );
-        var $author$project$Game$markCorrect = F4(
-          function(activeGameRow, solution, boardIdx, tiles) {
-            return _Utils_eq(boardIdx, activeGameRow) ? A2(
-              $elm$core$List$indexedMap,
-              F2(
-                function(letterIdx, tile) {
-                  var _v0 = tile;
-                  var _char = _v0.a;
-                  var currentLetterState = _v0.b;
-                  var letterState = A4($author$project$Game$checkCorrectChar, _char, letterIdx, solution, currentLetterState);
-                  return _Utils_Tuple2(_char, letterState);
-                }
-              ),
-              tiles
-            ) : tiles;
-          }
-        );
-        var $author$project$Game$Incorrect = { $: "Incorrect" };
-        var $author$project$Game$Present = { $: "Present" };
-        var $author$project$Game$checkOtherStatesChar = F3(
-          function(ch, word, markedLetterState) {
-            var isPresent = F2(
-              function(_char, string) {
-                return function(len) {
-                  return len > 0;
-                }(
-                  $elm$core$List$length(
-                    function(search) {
-                      return A2($elm$core$String$indexes, search, string);
-                    }(
-                      $elm$core$String$fromChar(_char)
-                    )
-                  )
-                );
-              }
-            );
-            var currentlyCorrect = function() {
-              if (markedLetterState.$ === "Correct") {
-                return true;
-              } else {
-                return false;
-              }
-            }();
-            return currentlyCorrect ? $author$project$Game$Correct : A2(isPresent, ch, word) ? $author$project$Game$Present : $author$project$Game$Incorrect;
-          }
-        );
-        var $elm$core$String$fromList = _String_fromList;
-        var $elm$core$String$foldr = _String_foldr;
-        var $elm$core$String$toList = function(string) {
-          return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
-        };
-        var $elm$core$String$trim = _String_trim;
-        var $author$project$Game$markOtherTiles = F4(
-          function(activeGameRow, solution, boardIdx, tiles) {
-            var calcNewSolution = F2(
-              function(tile, solutionChar) {
-                if (tile.b.$ === "Correct") {
-                  var _v2 = tile.b;
-                  return _Utils_chr("_");
-                } else {
-                  return solutionChar;
-                }
-              }
-            );
-            var calculatedSolution = function(currentSolution) {
-              return $elm$core$String$trim(
-                $elm$core$String$fromList(
-                  A3(
-                    $elm$core$List$map2,
-                    calcNewSolution,
-                    tiles,
-                    $elm$core$String$toList(currentSolution)
-                  )
-                )
-              );
-            };
-            return _Utils_eq(boardIdx, activeGameRow) ? A2(
-              $elm$core$List$map,
-              function(tile) {
-                var _v0 = tile;
-                var _char = _v0.a;
-                var currentLetterState = _v0.b;
-                var newLetterState = A3(
-                  $author$project$Game$checkOtherStatesChar,
-                  _char,
-                  calculatedSolution(solution),
-                  currentLetterState
-                );
-                return _Utils_Tuple2(_char, newLetterState);
-              },
-              tiles
-            ) : tiles;
-          }
-        );
-        var $author$project$Game$applyGuess = function(game) {
-          return A2(
-            $elm$core$List$indexedMap,
-            A2($author$project$Game$markOtherTiles, game.currentRow, game.solution),
-            A2(
-              $elm$core$List$indexedMap,
-              A2($author$project$Game$markCorrect, game.currentRow, game.solution),
-              game.board
-            )
-          );
-        };
         var $author$project$Game$ClearAlert = { $: "ClearAlert" };
         var $elm$core$Process$sleep = _Process_sleep;
         var $author$project$Game$clearAlert = function(maybeMessage) {
@@ -10558,22 +10749,6 @@
             }
           }
         );
-        var $elm$core$List$head = function(list) {
-          if (list.b) {
-            var x = list.a;
-            var xs = list.b;
-            return $elm$core$Maybe$Just(x);
-          } else {
-            return $elm$core$Maybe$Nothing;
-          }
-        };
-        var $elm_community$list_extra$List$Extra$getAt = F2(
-          function(idx, xs) {
-            return idx < 0 ? $elm$core$Maybe$Nothing : $elm$core$List$head(
-              A2($elm$core$List$drop, idx, xs)
-            );
-          }
-        );
         var $author$project$Words$getRandom = function(idx) {
           return A2(
             $elm_community$list_extra$List$Extra$getAt,
@@ -10595,6 +10770,7 @@
               return "Present";
           }
         };
+        var $author$project$Game$persistGuess = _Platform_outgoingPort("persistGuess", $elm$json$Json$Encode$string);
         var $author$project$Game$ShowEndGameMessage = { $: "ShowEndGameMessage" };
         var $author$project$Game$showEndGameMessage = A2(
           $elm$core$Task$perform,
@@ -10815,79 +10991,6 @@
             }
           }
         );
-        var $elm_community$list_extra$List$Extra$indexedFoldl = F3(
-          function(func, acc, list) {
-            var step = F2(
-              function(x, _v0) {
-                var i = _v0.a;
-                var thisAcc = _v0.b;
-                return _Utils_Tuple2(
-                  i + 1,
-                  A3(func, i, x, thisAcc)
-                );
-              }
-            );
-            return A3(
-              $elm$core$List$foldl,
-              step,
-              _Utils_Tuple2(0, acc),
-              list
-            ).b;
-          }
-        );
-        var $author$project$Game$updateKeyboardDict = F3(
-          function(currentGuess, currentDict, solution) {
-            return A3(
-              $elm_community$list_extra$List$Extra$indexedFoldl,
-              F3(
-                function(idx, ch, dict) {
-                  return A3(
-                    $elm$core$Dict$update,
-                    ch,
-                    function(maybeLetterState) {
-                      var checkOthers = A2($author$project$Game$checkOtherStatesChar, ch, solution);
-                      var checkCorrect = A3($author$project$Game$checkCorrectChar, ch, idx, solution);
-                      var checkAll = A2($elm$core$Basics$composeR, checkCorrect, checkOthers);
-                      _v0$4:
-                        while (true) {
-                          if (maybeLetterState.$ === "Just") {
-                            switch (maybeLetterState.a.$) {
-                              case "Blank":
-                                var _v1 = maybeLetterState.a;
-                                return $elm$core$Maybe$Just(
-                                  checkAll($author$project$Game$Blank)
-                                );
-                              case "Correct":
-                                var _v2 = maybeLetterState.a;
-                                return $elm$core$Maybe$Just($author$project$Game$Correct);
-                              case "Present":
-                                var _v3 = maybeLetterState.a;
-                                return $elm$core$Maybe$Just(
-                                  checkAll($author$project$Game$Present)
-                                );
-                              case "Incorrect":
-                                var _v4 = maybeLetterState.a;
-                                return $elm$core$Maybe$Just(
-                                  checkAll($author$project$Game$Incorrect)
-                                );
-                              default:
-                                break _v0$4;
-                            }
-                          } else {
-                            break _v0$4;
-                          }
-                        }
-                      return $elm$core$Maybe$Just($author$project$Game$Blank);
-                    },
-                    dict
-                  );
-                }
-              ),
-              currentDict,
-              currentGuess
-            );
-          }
-        );
         var $elm$core$Dict$member = F2(
           function(key, dict) {
             var _v0 = A2($elm$core$Dict$get, key, dict);
@@ -11049,7 +11152,7 @@
                       var gameLost = function(solution) {
                         return isSubmittable && (!_Utils_eq(guess, solution) && (gameState.currentRow === 5 && $author$project$Words$wordIsValid(guess)));
                       };
-                      var board = shouldApplyGuess ? $author$project$Game$applyGuess(gameState) : gameState.board;
+                      var board = shouldApplyGuess ? A3($author$project$Game$applyGuess, gameState.currentRow, gameState.solution, gameState.board) : gameState.board;
                       var gameWon = A2(
                         $elm$core$Maybe$withDefault,
                         false,
@@ -11128,7 +11231,8 @@
                                   $author$project$Game$clearAlert(message),
                                   $author$project$Game$submitGuess(
                                     A3($author$project$Game$SubmitGuessPortable, guess, guessAsStateArray, gameState.currentRow + 1)
-                                  )
+                                  ),
+                                  $author$project$Game$persistGuess(guess)
                                 ]
                               )
                             )
