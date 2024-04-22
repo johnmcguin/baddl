@@ -9,6 +9,8 @@ defmodule Baddl.Games.Game do
     field :answer, :string
     belongs_to :room, Room
 
+    field :ended_at, :utc_datetime
+    field :won_by, :string
     timestamps(type: :utc_datetime)
   end
 
@@ -23,5 +25,12 @@ defmodule Baddl.Games.Game do
     game
     |> cast(attrs, [:answer, :room_id])
     |> validate_required([:answer, :room_id])
+  end
+
+  def end_game(game, attrs) do
+    game
+    |> cast(attrs, [:won_by])
+    |> validate_required([:won_by])
+    |> change(%{ended_at: DateTime.truncate(DateTime.utc_now(), :second)})
   end
 end

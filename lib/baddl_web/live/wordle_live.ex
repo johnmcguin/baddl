@@ -37,7 +37,7 @@ defmodule BaddlWeb.WordleLive do
         |> assign(game_id: get_game_id(room))
         |> assign(messages: %{})
         |> assign(game_ready: false)
-        |> assign(winner: "")
+        |> assign(winner: get_game_winner(room))
         |> assign_async(:answer, fn -> get_answer(id) end)
         |> then(fn socket -> {:noreply, socket} end)
     end
@@ -66,6 +66,8 @@ defmodule BaddlWeb.WordleLive do
     Endpoint.broadcast(@current_game <> socket.assigns.room_id, "handle_game_won", %{
       player: socket.assigns.name
     })
+
+    Games.end_game(socket.assigns.game_id, socket.assigns.name)
 
     {:noreply, socket}
   end
@@ -137,7 +139,7 @@ defmodule BaddlWeb.WordleLive do
 
   def handle_info(%{topic: _topic, event: "handle_game_won", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_game_won")
-
+    
     socket
     |> assign(winner: payload.player)
     |> then(fn socket -> {:noreply, socket} end)
@@ -154,11 +156,10 @@ defmodule BaddlWeb.WordleLive do
         {:error, "could not get the answer for the current game"}
 
       answer ->
-        # IO.puts("""
-        # answer is
-        # #{inspect(answer, pretty: true)}
-        # """)
-
+        IO.puts("""
+        answer is
+        #{inspect(answer, pretty: true)}
+        """)
         {:ok, %{answer: answer}}
     end
   end
@@ -191,13 +192,24 @@ defmodule BaddlWeb.WordleLive do
     end)
   end
 
-  defp get_game_id(%Room{games: games} = room) do
+  defp get_game_id(%Room{games: games} = _room) do
     case List.first(games) do
       nil ->
         "initial"
 
       game ->
         game.id
+    end
+  end
+
+  defp get_game_winner(%Room{games: games} = _room) do
+    case List.first(games) do
+      nil ->
+        ""
+
+      game ->
+        winner = Map.get(game, :won_by)
+        winner || ""
     end
   end
 end
