@@ -60,50 +60,61 @@ let liveSocket = new LiveSocket("/live", Socket, {
       },
     },
     Wordle: {
+      updated() {
+        if (window?.ELM_APP) {
+          this.mount();
+        }
+      },
       mounted() {
         if (window?.ELM_APP) {
-          const { answer, game, room } = this.el.dataset;
-          const history = JSON.parse(localStorage.getItem(room));
-          const roomHistory = history ? history[game] : [];
-          const flags = {
-            word: answer,
-            history: roomHistory,
-          };
-
-          const appContainer = document.createElement("div");
-          this.el.appendChild(appContainer);
-
-          const app = window.ELM_APP.Main.init({
-            node: appContainer,
-            flags,
-          });
-
-          app.ports.submitGuess.subscribe((guess) => {
-            this.pushEventTo(this.el, "handle_guess", guess);
-          });
-
-          app.ports.submitWin.subscribe(() => {
-            // hacky, but accomodates elm transition before sending
-            setTimeout(() => {
-              this.pushEventTo(this.el, "handle_win", {
-                completedAt: Date.now(),
-              });
-            }, 1500);
-          });
-
-          app.ports.persistGuess.subscribe((guess) => {
-            const gameState = JSON.parse(localStorage.getItem(room));
-            const roomHistory = gameState ? gameState[game] : { [game]: [] };
-            if (roomHistory?.length) {
-              localStorage.setItem(
-                room,
-                JSON.stringify({ [game]: [...roomHistory, guess] }),
-              );
-            } else {
-              localStorage.setItem(room, JSON.stringify({ [game]: [guess] }));
-            }
-          });
+          this.mount();
         }
+      },
+      mount() {
+        if (this.el.firstChild) {
+          this.el.removeChild(this.el.firstChild);
+        }
+        const { answer, game, room } = this.el.dataset;
+        const history = JSON.parse(localStorage.getItem(room));
+        const roomHistory = history ? history[game] : [];
+        const flags = {
+          word: answer,
+          history: roomHistory,
+        };
+        const appContainer = document.createElement("div");
+        appContainer.id = "hooker";
+        this.el.appendChild(appContainer);
+
+        const app = window.ELM_APP.Main.init({
+          node: appContainer,
+          flags,
+        });
+
+        app.ports.submitGuess.subscribe((guess) => {
+          this.pushEventTo(this.el, "handle_guess", guess);
+        });
+
+        app.ports.submitWin.subscribe(() => {
+          // hacky, but accomodates elm transition before pushing to server
+          setTimeout(() => {
+            this.pushEventTo(this.el, "handle_win", {
+              completedAt: Date.now(),
+            });
+          }, 1500);
+        });
+
+        app.ports.persistGuess.subscribe((guess) => {
+          const gameState = JSON.parse(localStorage.getItem(room));
+          const roomHistory = gameState ? gameState[game] : { [game]: [] };
+          if (roomHistory?.length) {
+            localStorage.setItem(
+              room,
+              JSON.stringify({ [game]: [...roomHistory, guess] }),
+            );
+          } else {
+            localStorage.setItem(room, JSON.stringify({ [game]: [guess] }));
+          }
+        });
       },
     },
   },

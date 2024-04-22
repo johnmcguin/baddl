@@ -95,12 +95,21 @@ defmodule BaddlWeb.WordleLive do
         socket
       ) do
     Logger.info("#{__MODULE__} handle_new_game")
+    case Games.get_active_room(game_token) do
+      nil ->
+        socket
+        |> put_flash(:error, "Game room #{game_token} not found")
+        |> push_navigate(to: "/")
+        |> then(fn socket -> {:noreply, socket} end)
 
-    socket
-    |> assign(winner: "")
-    |> assign_async(:answer, fn -> get_answer(game_token) end)
-    |> assign(messages: %{})
-    |> then(fn socket -> {:noreply, socket} end)
+      %Room{} = room ->
+        socket
+        |> assign(game_id: get_game_id(room))
+        |> assign(messages: %{})
+        |> assign(winner: get_game_winner(room))
+        |> assign_async(:answer, fn -> get_answer(game_token) end)
+        |> then(fn socket -> {:noreply, socket} end)
+    end
   end
 
   def handle_info(
