@@ -156,10 +156,6 @@ defmodule BaddlWeb.WordleLive do
         {:error, "could not get the answer for the current game"}
 
       answer ->
-        IO.puts("""
-        answer is
-        #{inspect(answer, pretty: true)}
-        """)
         {:ok, %{answer: answer}}
     end
   end
