@@ -10412,10 +10412,12 @@
             }
           }
         );
+        var $elm$core$Debug$log = _Debug_log;
         var $author$project$Main$init = function(flags) {
           var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$flagsDecoder, flags);
           if (_v0.$ === "Ok") {
             var result = _v0.a;
+            var _v1 = A2($elm$core$Debug$log, "result", result);
             return _Utils_Tuple2(
               $author$project$Main$Game(
                 A2($author$project$Game$init, result.word, result.history)
@@ -10423,6 +10425,8 @@
               $elm$core$Platform$Cmd$none
             );
           } else {
+            var err = _v0.a;
+            var _v2 = A2($elm$core$Debug$log, "err", err);
             return _Utils_Tuple2(
               $author$project$Main$Game(
                 A2($author$project$Game$init, "", _List_Nil)
@@ -11207,6 +11211,9 @@
                           var message = getMessage(
                             isUnsupportedWord(guess)
                           );
+                          var maybePersistGuess = function(shouldPersist) {
+                            return shouldPersist ? $author$project$Game$persistGuess(guess) : $elm$core$Platform$Cmd$none;
+                          };
                           var guessAsStateArray = A2(getCurrentGuessAsStateArray, board, gameState.currentRow);
                           return _Utils_Tuple2(
                             $author$project$Game$InProgress(
@@ -11232,7 +11239,7 @@
                                   $author$project$Game$submitGuess(
                                     A3($author$project$Game$SubmitGuessPortable, guess, guessAsStateArray, gameState.currentRow + 1)
                                   ),
-                                  $author$project$Game$persistGuess(guess)
+                                  maybePersistGuess(shouldApplyGuess)
                                 ]
                               )
                             )

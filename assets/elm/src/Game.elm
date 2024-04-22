@@ -371,6 +371,14 @@ update msg model =
                     guessAsStateArray : List String
                     guessAsStateArray =
                         getCurrentGuessAsStateArray board gameState.currentRow
+
+                    maybePersistGuess : Bool -> Cmd msg
+                    maybePersistGuess shouldPersist =
+                        if shouldPersist then
+                            persistGuess guess
+
+                        else
+                            Cmd.none
                 in
                 ( InProgress
                     { gameState
@@ -396,7 +404,7 @@ update msg model =
                         , message = message
                         , keyboardDictionary = newDict shouldApplyGuess
                     }
-                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess (SubmitGuessPortable guess guessAsStateArray (gameState.currentRow + 1)), persistGuess guess ]
+                , Cmd.batch [ clearAnimation (isUnsupportedWord guess || not isSubmittable), clearAlert message, submitGuess (SubmitGuessPortable guess guessAsStateArray (gameState.currentRow + 1)), maybePersistGuess shouldApplyGuess ]
                 )
 
         ( InProgress gameState, Delete ) ->
