@@ -62,14 +62,15 @@ let liveSocket = new LiveSocket("/live", Socket, {
     Wordle: {
       mounted() {
         if (window?.ELM_APP) {
-          const appContainer = document.createElement("div");
           const { answer, game, room } = this.el.dataset;
           const history = JSON.parse(localStorage.getItem(room));
-          const roomHistory = history ? history[game] : { [game]: [] };
+          const roomHistory = history ? history[game] : [];
           const flags = {
             word: answer,
             history: roomHistory,
           };
+
+          const appContainer = document.createElement("div");
           this.el.appendChild(appContainer);
 
           const app = window.ELM_APP.Main.init({
