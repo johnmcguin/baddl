@@ -29,7 +29,7 @@ defmodule BaddlWeb.WordleLive do
         Endpoint.subscribe(@current_game <> id)
         Presence.track(self(), @current_game <> id, name, %{name: name})
         Presence.track(self(), @all_players, "game_" <> id <> "_" <> name, %{name: name})
-        broadcast_readiness(@current_game <> id, game_ready?(id, room.num_players))
+        Endpoint.broadcast("game:" <> id, "check_readiness", %{})
 
         socket
         |> assign(name: name)
@@ -95,6 +95,7 @@ defmodule BaddlWeb.WordleLive do
         socket
       ) do
     Logger.info("#{__MODULE__} handle_new_game")
+
     case Games.get_active_room(game_token) do
       nil ->
         socket
@@ -122,11 +123,6 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, assign(socket, game_ready: game_ready?(game_token, room.num_players))}
   end
 
-  def handle_info(%{topic: _topic, event: "handle_readiness", payload: payload}, socket) do
-    Logger.info("#{__MODULE__} handle_readiness")
-    {:noreply, assign(socket, game_ready: payload.ready)}
-  end
-
   def handle_info(%{topic: _topic, event: "handle_set_answer", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_set_answer")
 
@@ -148,7 +144,7 @@ defmodule BaddlWeb.WordleLive do
 
   def handle_info(%{topic: _topic, event: "handle_game_won", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_game_won")
-    
+
     socket
     |> assign(winner: payload.player)
     |> then(fn socket -> {:noreply, socket} end)
@@ -167,10 +163,6 @@ defmodule BaddlWeb.WordleLive do
       answer ->
         {:ok, %{answer: answer}}
     end
-  end
-
-  defp broadcast_readiness(topic, ready_state) do
-    Endpoint.broadcast(topic, "handle_readiness", %{ready: ready_state})
   end
 
   defp game_ready?(game_token, expected_players) do
