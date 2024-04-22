@@ -42,10 +42,21 @@ defmodule Baddl.Games do
   def get_active_room(short_token) do
     query_active_room(short_token)
     |> room_active_game()
-    |> preload([g, r], games: g)
+    |> preload([r, g], games: g)
     |> Repo.one()
   end
 
+  @doc """
+  Creates a new game for a given room
+
+  ## Examples
+
+      iex> create_new_game("293jskdj")
+      {:ok, _multi_results}
+
+      iex> create_new_game("invalid")
+      {:error, _multi_errors}
+  """
   def create_new_game(short_token) do
     Multi.new()
     |> Multi.one(:room, query_active_room(short_token))
@@ -55,9 +66,40 @@ defmodule Baddl.Games do
           {:error, :not_found}
 
         room ->
-          answer = Enum.random(~w(place tests space demos there three slate pacer))
-          cs = Game.new_game(%Game{}, %{answer: answer, room_id: room.id})
-          Repo.insert(cs)
+          Game.new_game(%Game{}, %{answer: get_random_word(), room_id: room.id})
+          |> Repo.insert()
+      end
+    end)
+    |> Repo.transaction()
+  end
+
+  @doc """
+  Ends a game with a winner. Persists end game state to handle refresh or 
+  reconnection
+
+  ## Examples
+
+      iex> end_game("192398-289209243-190293", "winner")
+      {:ok, _multi_results}
+
+      iex> end_game("not_found_id", "winner")
+      {:error, _multi_errors}
+  """
+  def end_game(game_id, winner) do
+    get_game =
+      Game
+      |> where([g], g.id == ^game_id)
+
+    Multi.new()
+    |> Multi.one(:game, get_game)
+    |> Multi.run(:end_game, fn _repo, %{game: game} ->
+      case game do
+        nil ->
+          {:error, :not_found}
+
+        game ->
+          Game.end_game(game, %{won_by: winner})
+          |> Repo.update()
       end
     end)
     |> Repo.transaction()
