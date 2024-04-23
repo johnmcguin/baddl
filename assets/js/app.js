@@ -37,6 +37,13 @@ let liveSocket = new LiveSocket("/live", Socket, {
           this.el.style.display = "none";
         }
       },
+      updated() {
+        const ls = localStorage.getItem("should_show_baddl_count");
+        const shouldShow = ls === "true";
+        if (!shouldShow) {
+          this.el.style.display = "none";
+        }
+      },
     },
     AnimatePlayer: {
       mounted() {
