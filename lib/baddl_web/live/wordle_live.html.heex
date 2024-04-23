@@ -44,8 +44,13 @@
   </div>
   <.button phx-click="new_game" class="w-full">Start New Game</.button>
 </div>
-<div :if={!@game_ready} class="pulse text-center text-3xl text-gray-500">
-  waiting for all players to join...
+<div :if={!@game_ready}>
+  <div class="pulse text-center text-3xl text-gray-500 mb-4">
+    waiting for all players to join...
+  </div>
+  <div class="text-center text-gray-500">
+    Game Code: <span><%= @room_id %></span>
+  </div>
 </div>
 <.async_result :let={answer} :if={@game_ready && String.length(@winner) == 0} assign={@answer}>
   <:failed :let={_failure}>there was an error creating the game</:failed>
