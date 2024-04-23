@@ -7,6 +7,8 @@ defmodule Baddl.Application do
 
   @impl true
   def start(_type, _args) do
+    Baddl.Release.migrate()
+
     children = [
       BaddlWeb.Telemetry,
       Baddl.Repo,
