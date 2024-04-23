@@ -24,7 +24,7 @@ config :baddl, BaddlWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:baddl, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:baddl, ~w(--watch)]},
-    node: ["./src/build.js", "--watch", cd: Path.expand("../assets/elm", __DIR__)]
+    node: ["./build.js", "--watch", cd: Path.expand("../assets/elm", __DIR__)]
   ]
 
 # ## SSL Support

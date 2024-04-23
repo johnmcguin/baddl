@@ -73,9 +73,17 @@ defmodule Baddl.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind baddl", "esbuild baddl"],
+      "assets.setup": [
+        "tailwind.install --if-missing",
+        "esbuild.install --if-missing",
+        "cmd --cd assets/elm npm install"
+      ],
+      "assets.build": [
+        "tailwind baddl",
+        "esbuild baddl"
+      ],
       "assets.deploy": [
+        "cmd --cd assets/elm node build.js --deploy",
         "tailwind baddl --minify",
         "esbuild baddl --minify",
         "phx.digest"

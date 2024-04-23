@@ -32,7 +32,7 @@ if (watch) {
   esbuild.build({
     ...baseOpts,
     minify: true,
-    plugins: [ElmPlugin({ optimize: true })],
+    plugins: [ElmPlugin({ optimize: true, debug: false })],
   });
 } else {
   esbuild.build({
