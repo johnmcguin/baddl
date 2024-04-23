@@ -31,7 +31,7 @@ defmodule BaddlWeb.Presence do
     {:ok, state}
   end
 
-  def handle_metas("game:" <> game_token, _diff, _presences, state) do
+  def handle_metas("game:" <> _game_token, _diff, _presences, state) do
     {:ok, state}
   end
 
