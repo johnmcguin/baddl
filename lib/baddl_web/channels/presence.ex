@@ -35,7 +35,7 @@ defmodule BaddlWeb.Presence do
     {:ok, state}
   end
 
-  def handle_metas(_topic, _diff, _presences, state) do
+  def handle_metas("all_players", _diff, _presences, state) do
     Endpoint.broadcast("all_players", "player_joined", %{})
     {:ok, state}
   end
