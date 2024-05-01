@@ -146,7 +146,7 @@ defmodule Baddl.Games do
 
   defp room_active_game(room_query) do
     room_query
-    |> join(:inner, [r], g in assoc(r, :games))
+    |> join(:left, [r], g in assoc(r, :games))
     |> order_by([r, g], desc: g.inserted_at)
     |> first()
   end
