@@ -17,6 +17,7 @@ defmodule BaddlWeb.WordleLive do
   @current_game "game:"
   @all_players "all_players"
 
+  @impl true
   def handle_params(%{"id" => id, "name" => name}, _url, socket) do
     Logger.info("FETCHING room #{id}")
 
@@ -45,10 +46,12 @@ defmodule BaddlWeb.WordleLive do
     end
   end
 
+  @impl true
   def handle_params(%{"id" => id}, _url, socket) do
     {:noreply, push_patch(socket, to: "/game/#{id}?name=Guest")}
   end
 
+  @impl true
   def handle_event("handle_guess", payload, socket) do
     Endpoint.broadcast_from(
       self(),
@@ -64,6 +67,7 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
+  @impl true
   def handle_event("handle_win", _payload, socket) do
     Endpoint.broadcast(@current_game <> socket.assigns.room_id, "handle_game_won", %{
       player: socket.assigns.name
@@ -74,6 +78,7 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
+  @impl true
   def handle_event("new_game", _payload, socket) do
     room_id = socket.assigns.room_id
 
@@ -92,6 +97,7 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
+  @impl true
   def handle_info(
         %{topic: @current_game <> game_token, event: "handle_new_game", payload: _payload},
         socket
@@ -115,6 +121,7 @@ defmodule BaddlWeb.WordleLive do
     end
   end
 
+  @impl true
   def handle_info(
         %{topic: @current_game <> game_token, event: "check_readiness", payload: _payload},
         socket
@@ -125,6 +132,7 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, assign(socket, game_ready: game_ready?(game_token, room.num_players))}
   end
 
+  @impl true
   def handle_info(%{topic: _topic, event: "handle_set_answer", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_set_answer")
 
@@ -135,6 +143,7 @@ defmodule BaddlWeb.WordleLive do
     end
   end
 
+  @impl true
   def handle_info(%{topic: _topic, event: "handle_player_guess", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_player_guess")
 
@@ -144,6 +153,7 @@ defmodule BaddlWeb.WordleLive do
     |> then(fn socket -> {:noreply, socket} end)
   end
 
+  @impl true
   def handle_info(%{topic: _topic, event: "handle_game_won", payload: payload}, socket) do
     Logger.info("#{__MODULE__} handle_game_won")
 
@@ -152,8 +162,20 @@ defmodule BaddlWeb.WordleLive do
     |> then(fn socket -> {:noreply, socket} end)
   end
 
+  @impl true
   def handle_info(_event, socket) do
     {:noreply, socket}
+  end
+
+  @impl true
+  def terminate(_reason, socket) do
+    room_id = socket.assigns.room_id
+
+    if num_present(room_id) == 1 do
+      Games.close_room(room_id)
+    end
+
+    :ok
   end
 
   defp get_answer(room_id) do
@@ -168,10 +190,14 @@ defmodule BaddlWeb.WordleLive do
   end
 
   defp game_ready?(game_token, expected_players) do
+    num_present(game_token)
+    |> Kernel.==(expected_players)
+  end
+
+  defp num_present(game_token) do
     Presence.list(@current_game <> game_token)
     |> Map.keys()
     |> Kernel.length()
-    |> Kernel.==(expected_players)
   end
 
   defp update_player_state(socket, %{
