@@ -11,8 +11,21 @@ defmodule BaddlWeb.Presence do
 
   require Logger
   alias BaddlWeb.Endpoint
+  alias Baddl.Games
 
   def init(_opts), do: {:ok, %{}}
+
+  def handle_metas("game:" <> game_token, %{leaves: leaves}, presences, state)
+      when presences == %{} do
+    case Enum.count(leaves) > 0 do
+      true ->
+        Games.close_room(game_token)
+        {:ok, state}
+
+      false ->
+        {:ok, state}
+    end
+  end
 
   def handle_metas("game:" <> _game_token, _diff, _presences, state) do
     {:ok, state}

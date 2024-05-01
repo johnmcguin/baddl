@@ -167,17 +167,6 @@ defmodule BaddlWeb.WordleLive do
     {:noreply, socket}
   end
 
-  @impl true
-  def terminate(_reason, socket) do
-    room_id = socket.assigns.room_id
-
-    if num_present(room_id) == 1 do
-      Games.close_room(room_id)
-    end
-
-    :ok
-  end
-
   defp get_answer(room_id) do
     case Games.get_answer_for_current_game(room_id) do
       nil ->
