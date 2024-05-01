@@ -17,20 +17,7 @@ defmodule BaddlWeb.Presence do
 
   def handle_metas("game:" <> game_token, %{leaves: leaves, joins: joins}, presences, state)
       when presences == %{} do
-    IO.puts("""
-    leaves is
-    #{inspect(leaves, pretty: true)}
-    """)
-
-    IO.puts("""
-    joins is
-    #{inspect(joins, pretty: true)}
-    """)
-
-    IO.puts("""
-    presences is
-    #{inspect(presences, pretty: true)}
-    """)
+    Logger.info("EMPTY PRESENCE")
 
     case Enum.count(leaves) > 0 do
       true ->
@@ -42,7 +29,14 @@ defmodule BaddlWeb.Presence do
     end
   end
 
-  def handle_metas("game:" <> _game_token, _diff, _presences, state) do
+  def handle_metas("game:" <> _game_token, _diff, presences, state) do
+    Logger.info("NON EMPTY PRESENCE")
+
+    IO.puts("""
+    presences is
+    #{inspect(presences, pretty: true)}
+    """)
+
     {:ok, state}
   end
 
