@@ -144,14 +144,14 @@ defmodule Baddl.Games do
     |> Repo.one()
   end
 
-  defp room_active_game(room_query) do
+  def room_active_game(room_query) do
     room_query
     |> join(:left, [r], g in assoc(r, :games))
     |> order_by([r, g], desc: g.inserted_at)
     |> first()
   end
 
-  defp query_active_room(short_token) do
+  def query_active_room(short_token) do
     Room
     |> where([r], is_nil(r.ended_at) and r.short_token == ^short_token)
   end
