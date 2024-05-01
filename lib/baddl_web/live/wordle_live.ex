@@ -18,6 +18,8 @@ defmodule BaddlWeb.WordleLive do
   @all_players "all_players"
 
   def handle_params(%{"id" => id, "name" => name}, _url, socket) do
+    Logger.info("FETCHING room #{id}")
+
     case Games.get_active_room(id) do
       nil ->
         socket
