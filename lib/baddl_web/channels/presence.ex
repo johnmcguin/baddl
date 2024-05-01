@@ -15,8 +15,23 @@ defmodule BaddlWeb.Presence do
 
   def init(_opts), do: {:ok, %{}}
 
-  def handle_metas("game:" <> game_token, %{leaves: leaves}, presences, state)
+  def handle_metas("game:" <> game_token, %{leaves: leaves, joins: joins}, presences, state)
       when presences == %{} do
+    IO.puts("""
+    leaves is
+    #{inspect(leaves, pretty: true)}
+    """)
+
+    IO.puts("""
+    joins is
+    #{inspect(joins, pretty: true)}
+    """)
+
+    IO.puts("""
+    presences is
+    #{inspect(presences, pretty: true)}
+    """)
+
     case Enum.count(leaves) > 0 do
       true ->
         Games.close_room(game_token)
