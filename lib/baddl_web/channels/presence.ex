@@ -15,27 +15,10 @@ defmodule BaddlWeb.Presence do
 
   def init(_opts), do: {:ok, %{}}
 
-  def handle_metas("game:" <> game_token, %{leaves: leaves, joins: joins}, presences, state)
-      when presences == %{} do
-    Logger.info("EMPTY PRESENCE")
-
-    case Enum.count(leaves) > 0 do
-      true ->
-        Games.close_room(game_token)
-        {:ok, state}
-
-      false ->
-        {:ok, state}
+  def handle_metas("game:" <> game_token, diff, presences, state) do
+    if all_left?(diff.leaves, presences) do
+      Games.close_room(game_token)
     end
-  end
-
-  def handle_metas("game:" <> _game_token, _diff, presences, state) do
-    Logger.info("NON EMPTY PRESENCE")
-
-    IO.puts("""
-    presences is
-    #{inspect(presences, pretty: true)}
-    """)
 
     {:ok, state}
   end
@@ -43,5 +26,15 @@ defmodule BaddlWeb.Presence do
   def handle_metas("all_players", _diff, _presences, state) do
     Endpoint.broadcast("all_players", "player_joined", %{})
     {:ok, state}
+  end
+
+  defp all_left?(leaves, presences) do
+    leaving = Map.keys(leaves) |> MapSet.new()
+    present = Map.keys(presences) |> MapSet.new()
+
+    MapSet.difference(present, leaving)
+    |> MapSet.to_list()
+    |> length()
+    |> Kernel.==(0)
   end
 end
