@@ -32,6 +32,16 @@ defmodule BaddlWeb.Presence do
     leaving = Map.keys(leaves) |> MapSet.new()
     present = Map.keys(presences) |> MapSet.new()
 
+    IO.puts("""
+    leaving is
+    #{inspect(leaving, pretty: true)}
+    """)
+
+    IO.puts("""
+    present is
+    #{inspect(present, pretty: true)}
+    """)
+
     MapSet.difference(present, leaving)
     |> MapSet.to_list()
     |> length()
