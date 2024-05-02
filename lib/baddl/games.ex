@@ -9,6 +9,8 @@ defmodule Baddl.Games do
   alias Baddl.Repo
   alias Baddl.Games.{Room, Game, Word}
 
+  @game_room "game:"
+
   @doc """
   Gets a single room.
 
@@ -188,5 +190,26 @@ defmodule Baddl.Games do
   """
   def delete_room(%Room{} = room) do
     Repo.delete(room)
+  end
+
+  @doc """
+  Returns a getter over the game room topic. Returns the full topic 
+  if a short_token is provided. Alternatively, provides the @game_room 
+  topic base
+
+  ## Examples
+
+      iex> room_topic("asdf")
+      "game:asdf"
+
+      iex> room_topic()
+      "game:"
+  """
+  def room_topic(short_token) do
+    @game_room <> short_token
+  end
+
+  def room_topic() do
+    @game_room
   end
 end

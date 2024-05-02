@@ -11,16 +11,31 @@ defmodule BaddlWeb.Presence do
 
   require Logger
   alias BaddlWeb.Endpoint
-  alias Baddl.Games
 
-  def init(_opts), do: {:ok, %{}}
+  def init(_opts) do
+    {:ok, %{counts: %{}}}
+  end
 
-  def handle_metas("game:" <> game_token, diff, presences, state) do
-    if all_left?(diff.leaves, presences) do
-      Games.close_room(game_token)
+  def handle_metas(
+        "game:" <> game_token,
+        %{joins: joins, leaves: leaves},
+        _presences,
+        %{counts: counts} = state
+      ) do
+    join_count = Map.keys(joins) |> length()
+    leave_count = Map.keys(leaves) |> length()
+
+    counts = Map.update(counts, game_token, join_count, &(&1 + join_count - leave_count))
+
+    room_empty = room_empty?(counts, game_token)
+
+    if room_empty do
+      Baddl.GameEnd.maybe_close_room(game_token)
     end
 
-    {:ok, state}
+    counts = if(room_empty, do: Map.delete(counts, game_token), else: counts)
+
+    {:ok, %{state | counts: counts}}
   end
 
   def handle_metas("all_players", _diff, _presences, state) do
@@ -28,23 +43,5 @@ defmodule BaddlWeb.Presence do
     {:ok, state}
   end
 
-  defp all_left?(leaves, presences) do
-    leaving = Map.keys(leaves) |> MapSet.new()
-    present = Map.keys(presences) |> MapSet.new()
-
-    IO.puts("""
-    leaving is
-    #{inspect(leaving, pretty: true)}
-    """)
-
-    IO.puts("""
-    present is
-    #{inspect(present, pretty: true)}
-    """)
-
-    MapSet.difference(present, leaving)
-    |> MapSet.to_list()
-    |> length()
-    |> Kernel.==(0)
-  end
+  defp room_empty?(counts, game_token), do: counts[game_token] == 0
 end
